@@ -350,7 +350,7 @@ make install
 ldconfig
 
 log "Enabling services to start at next boot"
-for SVC in tomcat guacd
+for SVC in tomcat guacd httpd
 do
     chkconfig ${SVC} on
 done
