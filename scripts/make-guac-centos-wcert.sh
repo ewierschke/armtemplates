@@ -277,8 +277,7 @@ MODUSER="/usr/sbin/usermod"
 
 # Start the real work
 log "Installing EPEL repo"
-retry 2 yum -y install \
-    http://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm
+retry 2 yum -y install epel-release
 
 retry 5 yum -y install yum-utils yum-plugin-fastestmirror wget
 
