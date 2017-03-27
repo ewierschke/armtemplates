@@ -1,0 +1,1 @@
+powershell.exe -ExecutionPolicy Bypass C:\temp\configure-rdsh.ps1
