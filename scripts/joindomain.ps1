@@ -1,6 +1,6 @@
 param (
     [Parameter(Mandatory=$True)]
-    [string]$domainnetbiosname,
+    [string]$domaindnsname,
  
     [Parameter(Mandatory=$True)]
     [string]$username,
@@ -10,6 +10,6 @@ param (
 )
 
 $secpassword = $password | ConvertTo-SecureString -asPlainText -Force
-$qualusername = "$domainnetbiosname\$username" 
+$qualusername = "$domaindnsname\$username" 
 $credential = New-Object System.Management.Automation.PSCredential($qualusername,$secpassword)
-Add-Computer -DomainName $domainnetbiosname -Credential $credential
+Add-Computer -DomainName $domaindnsname -Credential $credential
