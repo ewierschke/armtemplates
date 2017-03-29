@@ -40,11 +40,9 @@ function log {
     }
 }
 
-
 function die($Msg) {
     log -EntryType "Error" -LogMessage $Msg; Stop-Transcript; throw
 }
-
 
 function Manage-Output {
     [CmdLetBinding()]
@@ -95,7 +93,6 @@ function Set-OutputBuffer($Width=10000) {
         $host.ui.rawui.WindowSize=$windowSize
     }
 }
-
 
 # Begin Script
 # Create the JoinDomain log directory
@@ -155,10 +152,6 @@ if ($PSVersionTable.psversion.major -ge 4) {
 } else {
     invoke-expression "& $env:systemroot\system32\schtasks.exe /create /SC ONLOGON /RL HIGHEST /NP /V1 /RU SYSTEM /F /TR `"msg * /SERVER:%computername% ${msg}`" /TN `"${taskname}`"" 2>&1 | log -LogTag ${ScriptName}
 }
-
-
-log "Creating RunOne entry for next script"
-New-ItemProperty -path HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce -name "RunNextScript" -value '"powershell.exe -ExecutionPolicy Bypass "${JoinDomainDir}\${nextscript}.ps1""'
 
 log "Rebooting"
 Restart-Computer -Force -Verbose

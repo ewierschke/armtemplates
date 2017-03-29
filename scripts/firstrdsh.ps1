@@ -27,6 +27,28 @@ function log {
     }
 }
 
+function die($Msg) {
+    log -EntryType "Error" -LogMessage $Msg; Stop-Transcript; throw
+}
+
+function Manage-Output {
+    [CmdLetBinding()]
+    Param(
+        [Parameter(Mandatory=$false,Position=0,ValueFromPipeLine=$true)] [string[]]
+        $Output,
+        [Parameter(Mandatory=$false,Position=1)] [string]
+        $EntryType="Information"
+    )
+    PROCESS {
+        foreach ($str in $Output) {
+            #Write to the event log
+            Write-EventLog -LogName Application -Source "${LogSource}" -EventId 1 -EntryType $EntryType -Message "${str}"
+            #Write to the default stream (this way we don't clobber the output stream, and the output will be captured by Start-Transcript)
+            "${str}" | Out-Default
+        }
+    }
+}
+
 function Set-RegistryValue($Key,$Name,$Value,$Type=[Microsoft.win32.registryvaluekind]::DWord) {
     $Parent=split-path $Key -parent
     $Parent=get-item $Parent
@@ -59,8 +81,6 @@ function Set-OutputBuffer($Width=10000) {
     }
 }
 
-
-
 # Begin Script
 # Create the FirstRDSH log directory
 New-Item -Path $FirstRDSHDir -ItemType "directory" -Force 2>&1 > $null
@@ -84,10 +104,13 @@ try {
         throw
     }
 }
+
 log -LogTag ${ScriptName} "Downloading configure-rdsh.ps1"
 Invoke-Webrequest "https://raw.githubusercontent.com/ewierschke/armtemplates/runwincustdata/scripts/${nextscript}.ps1" -Outfile "${FirstRDSHDir}\${nextscript}.ps1";
+
 log -LogTag ${ScriptName} "Installing RDSH features"
 powershell.exe "Install-WindowsFeature RDS-RD-Server,RDS-Licensing -Verbose";
+
 log -LogTag ${ScriptName} "UnRegistering previous scheduled task"
 Unregister-ScheduledTask -TaskName "RunNextScript" -Confirm:$false;
 
@@ -107,4 +130,5 @@ if ($PSVersionTable.psversion.major -ge 4) {
     invoke-expression "& $env:systemroot\system32\schtasks.exe /create /SC ONLOGON /RL HIGHEST /NP /V1 /RU SYSTEM /F /TR `"msg * /SERVER:%computername% ${msg}`" /TN `"${taskname}`"" 2>&1 | log -LogTag ${ScriptName}
 }
 
+log -LogTag ${ScriptName} "Rebooting"
 powershell.exe "Restart-Computer -Force -Verbose";
