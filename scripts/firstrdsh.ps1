@@ -3,7 +3,7 @@ $FirstRDSHDir = "${env:SystemDrive}\FirstRDSH"
 $FirstRDSHLogDir = "${FirstRDSHDir}\Logs"
 $LogSource = "FirstRDSH"
 $DateTime = $(get-date -format "yyyyMMdd_HHmm_ss")
-$JoinDomainLogFile = "${FirstRDSHLogDir}\firstrdsh-log_${DateTime}.txt"
+$FirstRDSHLogFile = "${FirstRDSHLogDir}\firstrdsh-log_${DateTime}.txt"
 $ScriptName = $MyInvocation.mycommand.name
 $ErrorActionPreference = "Stop"
 $nextscript = "configure-rdsh"
@@ -51,7 +51,7 @@ try {
     }
 }
 log -LogTag ${ScriptName} "Downloading configure-rdsh.ps1"
-Invoke-Webrequest https://raw.githubusercontent.com/plus3it/cfn/master/scripts/configure-rdsh.ps1 -Outfile ${FirstRDSHDir}\configure-rdsh.ps1;
+Invoke-Webrequest "https://raw.githubusercontent.com/ewierschke/armtemplates/runwincustdata/scripts/${nextscript}.ps1" -Outfile "${FirstRDSHDir}\${nextscript}.ps1";
 log -LogTag ${ScriptName} "Installing RDSH features"
 powershell.exe "Install-WindowsFeature RDS-RD-Server,RDS-Licensing -Verbose";
 log -LogTag ${ScriptName} "UnRegistering previous scheduled task"
