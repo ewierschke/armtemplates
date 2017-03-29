@@ -27,6 +27,40 @@ function log {
     }
 }
 
+function Set-RegistryValue($Key,$Name,$Value,$Type=[Microsoft.win32.registryvaluekind]::DWord) {
+    $Parent=split-path $Key -parent
+    $Parent=get-item $Parent
+    $Key=get-item $Key
+    $Keyh=$Parent.opensubkey($Key.name.split("\")[-1],$true)
+    $Keyh.setvalue($Name,$Value,$Type)
+    $Keyh.close()
+}
+
+function Set-OutputBuffer($Width=10000) {
+    $keys=("hkcu:\console\%SystemRoot%_System32_WindowsPowerShell_v1.0_powershell.exe",
+           "hkcu:\console\%SystemRoot%_SysWOW64_WindowsPowerShell_v1.0_powershell.exe")
+    # other titles are ignored
+    foreach ($key in $keys) {
+        md $key -verbose -force
+        Set-RegistryValue $key FontSize 0x00050000
+        Set-RegistryValue $key ScreenBufferSize 0x02000200
+        Set-RegistryValue $key WindowSize 0x00200200
+        Set-RegistryValue $key FontFamily 0x00000036
+        Set-RegistryValue $key FontWeight 0x00000190
+        Set-ItemProperty $key FaceName "Lucida Console"
+
+        $bufferSize=$host.ui.rawui.bufferSize
+        $bufferSize.width=$Width
+        $host.ui.rawui.BufferSize=$BufferSize
+        $maxSize=$host.ui.rawui.MaxWindowSize
+        $windowSize=$host.ui.rawui.WindowSize
+        $windowSize.width=$maxSize.width
+        $host.ui.rawui.WindowSize=$windowSize
+    }
+}
+
+
+
 # Begin Script
 # Create the FirstRDSH log directory
 New-Item -Path $FirstRDSHDir -ItemType "directory" -Force 2>&1 > $null
