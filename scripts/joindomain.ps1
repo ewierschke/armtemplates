@@ -8,6 +8,9 @@ param (
     [Parameter(Mandatory=$True)]
     [string]$password,
 
+    [Parameter(Mandatory=$True)]
+    [string]$oupath,
+
     [Parameter(Mandatory=$False)]
     [string]$nextscript
 )
@@ -123,7 +126,7 @@ $qualusername = "${domaindnsname}\${username}"
 $credential = New-Object System.Management.Automation.PSCredential(${qualusername},${secpassword})
 log "Joining System to domain"
 try {
-    Add-Computer -DomainName $domaindnsname -Credential $credential
+    Add-Computer -DomainName $domaindnsname -Credential $credential -OUPath $oupath
 } catch {
     # Unhandled exception, log an error and exit!
     die "ERROR: Encountered a problem joining the domain!"
