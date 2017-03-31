@@ -1,12 +1,28 @@
+param (
+    [Parameter(Mandatory=$True,ValueFromPipelineByPropertyName=$true)]
+    [Security.SecureString]$domaindnsname,
+ 
+    [Parameter(Mandatory=$True,ValueFromPipelineByPropertyName=$true)]
+    [Security.SecureString]$username,
+
+    [Parameter(Mandatory=$True,ValueFromPipelineByPropertyName=$true)]
+    [Security.SecureString]$password,
+
+    [Parameter(Mandatory=$True,ValueFromPipelineByPropertyName=$true)]
+    [Security.SecureString]$oupath,
+
+    [Parameter(Mandatory=$False,ValueFromPipelineByPropertyName=$true)]
+    [Security.SecureString]$nextscript
+)
+
 # Define System variables
-$FirstRDSHDir = "${env:SystemDrive}\FirstRDSH"
-$FirstRDSHLogDir = "${FirstRDSHDir}\Logs"
-$LogSource = "FirstRDSH"
+$JoinDomainDir = "${env:SystemDrive}\JoinDomain"
+$JoinDomainLogDir = "${JoinDomainDir}\Logs"
+$LogSource = "JoinDomain"
 $DateTime = $(get-date -format "yyyyMMdd_HHmm_ss")
-$FirstRDSHLogFile = "${FirstRDSHLogDir}\firstrdsh-log_${DateTime}.txt"
+$JoinDomainLogFile = "${JoinDomainLogDir}\joindomain-log_${DateTime}.txt"
 $ScriptName = $MyInvocation.mycommand.name
 $ErrorActionPreference = "Stop"
-$nextscript = "configure-rdsh"
 
 # Define Functions
 function log {
@@ -82,15 +98,15 @@ function Set-OutputBuffer($Width=10000) {
 }
 
 # Begin Script
-# Create the FirstRDSH log directory
-New-Item -Path $FirstRDSHDir -ItemType "directory" -Force 2>&1 > $null
-New-Item -Path $FirstRDSHLogDir -ItemType "directory" -Force 2>&1 > $null
+# Create the JoinDomain log directory
+New-Item -Path $JoinDomainDir -ItemType "directory" -Force 2>&1 > $null
+New-Item -Path $JoinDomainLogDir -ItemType "directory" -Force 2>&1 > $null
 # Increase the screen width to avoid line wraps in the log file
 Set-OutputBuffer -Width 10000
 # Start a transcript to record script output
-Start-Transcript $FirstRDSHLogFile
+Start-Transcript $JoinDomainLogFile
 
-# Create a "FirstRDSH" event log source
+# Create a "JoinDomain" event log source
 try {
     New-EventLog -LogName Application -Source "${LogSource}"
 } catch {
@@ -104,15 +120,29 @@ try {
         throw
     }
 }
+$decryptdomaindnsname = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($domaindnsname))
+$decryptusername = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($username))
+$decryptoupath = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($oupath))
+$decryptnextscript = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($nextscript))
 
-log -LogTag ${ScriptName} "Downloading configure-rdsh.ps1"
-Invoke-Webrequest "https://raw.githubusercontent.com/ewierschke/armtemplates/runwincustdata/scripts/${nextscript}.ps1" -Outfile "${FirstRDSHDir}\${nextscript}.ps1";
+#$secpassword = ${password} | ConvertTo-SecureString -asPlainText -Force
+$qualusername = "${decryptdomaindnsname}\${decryptusername}" 
+$credential = New-Object System.Management.Automation.PSCredential(${qualusername},${password})
+log "Joining System to domain"
+try {
+    Add-Computer -DomainName $decryptdomaindnsname -Credential $credential -OUPath $decryptoupath
+} catch {
+    # Unhandled exception, log an error and exit!
+    die "ERROR: Encountered a problem joining the domain!"
+}
 
-log -LogTag ${ScriptName} "Installing RDSH features"
-powershell.exe "Install-WindowsFeature RDS-RD-Server,RDS-Licensing -Verbose";
-
-#log -LogTag ${ScriptName} "UnRegistering previous scheduled task"
-#Unregister-ScheduledTask -TaskName "RunNextScript" -Confirm:$false;
+log "Downloading Next Script"
+try {
+    Invoke-Webrequest "https://raw.githubusercontent.com/ewierschke/armtemplates/runwincustdata/scripts/${decryptnextscript}.ps1" -Outfile "${JoinDomainDir}\${decryptnextscript}.ps1"
+} catch {
+    # Unhandled exception, log an error and exit!
+    die "ERROR: Encountered a problem downloading the next script!"
+}
 
 #Create an atlogon scheduled task to run next script
 log -LogTag ${ScriptName} "Registering a scheduled task at logon to run the next script"
@@ -120,7 +150,7 @@ $msg = "Please upgrade Powershell and try again."
 
 $taskname = "RunNextScript"
 if ($PSVersionTable.psversion.major -ge 4) {
-    $A = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-ExecutionPolicy Bypass ${FirstRDSHDir}\${nextscript}.ps1"
+    $A = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-ExecutionPolicy Bypass ${JoinDomainDir}\${decryptnextscript}.ps1"
     $T = New-ScheduledTaskTrigger -AtStartup
     $P = New-ScheduledTaskPrincipal -UserId "NT AUTHORITY\SYSTEM" -RunLevel "Highest" -LogonType "ServiceAccount"
     $S = New-ScheduledTaskSettingsSet
@@ -130,5 +160,5 @@ if ($PSVersionTable.psversion.major -ge 4) {
     invoke-expression "& $env:systemroot\system32\schtasks.exe /create /SC ONLOGON /RL HIGHEST /NP /V1 /RU SYSTEM /F /TR `"msg * /SERVER:%computername% ${msg}`" /TN `"${taskname}`"" 2>&1 | log -LogTag ${ScriptName}
 }
 
-log -LogTag ${ScriptName} "Rebooting"
-powershell.exe "Restart-Computer -Force -Verbose";
+log "Rebooting"
+Restart-Computer -Force -Verbose
