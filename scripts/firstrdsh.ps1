@@ -115,7 +115,7 @@ log -LogTag ${ScriptName} "UnRegistering previous scheduled task"
 Unregister-ScheduledTask -TaskName "RunNextScript" -Confirm:$false;
 
 #Create an atlogon scheduled task to run next script
-log -LogTag ${ScriptName} "Registering a scheduled task at logon to run the next script"
+log -LogTag ${ScriptName} "Registering a scheduled task at startup to run the next script"
 $msg = "Please upgrade Powershell and try again."
 
 $taskname = "RunNextScript"

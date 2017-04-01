@@ -109,7 +109,7 @@ log -LogTag ${ScriptName} "Downloading firstrdsh.ps1"
 Invoke-Webrequest "https://raw.githubusercontent.com/ewierschke/armtemplates/runwincustdata/scripts/${nextscript}.ps1" -Outfile "${ScheduleNextScriptDir}\${nextscript}.ps1";
 
 #Create an atlogon scheduled task to run next script
-log -LogTag ${ScriptName} "Registering a scheduled task at logon to run the next script"
+log -LogTag ${ScriptName} "Registering a scheduled task at startup to run the next script"
 $msg = "Please upgrade Powershell and try again."
 
 $taskname = "RunNextScript"
