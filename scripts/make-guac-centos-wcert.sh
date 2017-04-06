@@ -657,6 +657,7 @@ do
     fi
 done
 
+chkconfig httpd on
 
 #Add custom URLs to Guacamole login page, change is not stateful due to sed pattern to be matched/replaced
 if ( [[ -n "${URL_1}" ]] || [[ -n "${URL_2}" ]] )
