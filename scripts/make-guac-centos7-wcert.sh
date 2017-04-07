@@ -283,10 +283,10 @@ retry 5 yum -y install yum-utils yum-plugin-fastestmirror wget
 
 #log "Ensuring the CentOS Base repo is available"
 #retry 5 curl -s --show-error --retry 5 -L "https://raw.githubusercontent.com/plus3it/cfn/master/scripts/CentOS-Base.repo" \
-    -o "/etc/yum.repos.d/CentOS-Base.repo"
+#    -o "/etc/yum.repos.d/CentOS-Base.repo"
 
 #retry 5 curl -s --show-error --retry 5 -L "https://raw.githubusercontent.com/plus3it/cfn/master/scripts/RPM-GPG-KEY-CentOS-6" \
-    -o "/etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-6"
+#    -o "/etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-6"
 
 #log "Enabling the EPEL and base repos"
 #yum-config-manager --enable epel base
@@ -618,8 +618,6 @@ log "Writing new /etc/httpd/conf.d/ssl.conf"
     printf "\n"
     printf "SSLSessionCache         shmcb:/var/cache/mod_ssl/scache(512000)\n"
     printf "SSLSessionCacheTimeout  300\n"
-    printf "\n"
-    printf "SSLMutex default\n"
     printf "\n"
     printf "SSLRandomSeed startup file:/dev/urandom  256\n"
     printf "SSLRandomSeed connect builtin\n"
