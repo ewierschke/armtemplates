@@ -583,6 +583,7 @@ then
 fi
 
 #Adjust firewalld
+firewall-cmd --zone=public --add-service=https
 firewall-cmd --zone=public --permanent --add-service=https
 #firewall-cmd --zone=public --permanent --add-port=8080/tcp
 
