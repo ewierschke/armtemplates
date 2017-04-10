@@ -308,7 +308,7 @@ retry 5 yum -y install git gcc cmake openssl-devel libX11-devel libXext-devel \
 cd /root
 FREERDP_BASE=$(basename ${FREERDP_REPO} .git)
 rm -rf "${FREERDP_BASE}"
-git clone "${FREERDP_REPO}" || \
+retry 5 git clone "${FREERDP_REPO}" || \
     die "Could not clone ${FREERDP_REPO}"
 cd "${FREERDP_BASE}"
 git checkout "${FREERDP_BRANCH}" || \
