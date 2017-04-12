@@ -554,6 +554,11 @@ chmod 744 /etc/profile.d/guacamole.sh
 log "Setting SEL contexts on shell-init files"
 chcon system_u:object_r:bin_t:s0 /etc/profile.d/guacamole.*
 
+#environment variable not working, creating symlink and copying extensions
+mkdir -p /usr/share/tomcat/.guacamole/{extensions,lib}
+ln -s /etc/guacamole/guacamole.properties /usr/share/tomcat/.guacamole/
+cp /etc/guacamole/extensions/guacamole-auth-* /usr/share/tomcat/.guacamole/extensions/
+
 
 log "Ensuring freerdp plugins are linked properly"
 if [[ ! -d /usr/lib64/freerdp ]]
