@@ -20,7 +20,7 @@
 #
 #################################################################
 __ScriptName="make-guac-centos.sh"
-__GuacVersion="0.9.12-incubating"
+__GuacVersion="0.9.11-incubating"
 
 log()
 {
@@ -349,7 +349,7 @@ make install
 ldconfig
 
 log "Enabling services to start at next boot"
-for SVC in tomcat guacd httpd
+for SVC in tomcat guacd
 do
     chkconfig ${SVC} on
 done
@@ -527,7 +527,7 @@ then
             echo "ldap-group-base-dn:      ${LDAP_GROUP_BASE},${LDAP_DOMAIN_DN}"
         ) >> /etc/guacamole/guacamole.properties
 
-        if [[ "$GUAC_VERSION" == "0.9.7" || "$GUAC_VERSION" == "0.9.12-incubating" ]]
+        if [[ "$GUAC_VERSION" == "0.9.7" || "$GUAC_VERSION" == "0.9.11-incubating" ]]
         then
             log "Enabling custom RBAC jar for ${GUAC_VERSION}"
             rm -rf "/etc/guacamole/extensions/*"
