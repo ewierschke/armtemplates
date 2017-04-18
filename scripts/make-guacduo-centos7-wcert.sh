@@ -122,6 +122,13 @@ usage()
       then this parameter is required for successful modification.
   -t  Text to be displayed for the URL provided with -l.  If -l is specified,
       then this parameter is required for successful modification.
+  -d  API Hostname to be used for Duo integration.
+  -I  Integration key provided by Duo for use in configuring Duo extension.  
+  -i  Secret key provided by Duo for use in configuring Duo extension.  Value must
+      be exactly 20 characters.
+  -K  Application key required for configuration of Duo extension.  Value must be
+      at least 40 characters.  If -d is specified but -K is not, a random application
+      key will be generated for you.
 EOT
 }  # ----------  end of function usage  ----------
 
@@ -143,10 +150,14 @@ URL_1=
 URLTEXT_1=
 URL_2=
 URLTEXT_2=
+DUO_API_HOSTNAME=
+DUO_INTKEY=
+DUO_SECRET=
+DUO_APPKEY=
 
 
 # Parse command-line parameters
-while getopts :hH:D:U:R:A:C:P:v:G:g:S:s:L:T:l:t: opt
+while getopts :hH:D:U:R:A:C:P:v:G:g:S:s:L:T:l:t:d:I:i:K: opt
 do
     case "${opt}" in
         h)
@@ -200,6 +211,18 @@ do
             ;;
         t)
             URLTEXT_2="${OPTARG}"
+            ;;
+        d)
+            DUO_API_HOSTNAME="${OPTARG}"
+            ;;
+        I)
+            DUO_INTKEY="${OPTARG}"
+            ;;
+        i)
+            DUO_SECRET="${OPTARG}"
+            ;;
+        K)
+            DUO_APPKEY="${OPTARG}"
             ;;
         \?)
             usage
@@ -258,6 +281,29 @@ then
 elif [ -n "${URLTEXT_2}" ]
 then
     die "URLTEXT2 was provided (-t), but the URL was not (-l), login page unmodified; exiting"
+fi
+
+# Validate DUO parameters
+if [ -n "${DUO_API_HOSTNAME}" ]
+then
+    if [ -z "${DUO_INTKEY}" ] 
+    then
+        die "DUO API Hostname was provided (-d), but the DUO Integration Key was not (-I)"
+    fi
+elif [ -n "${DUO_SECRET}" ]
+then
+    die "DUO API Hostname was provided (-d), but the DUO Secret Key was not (-i)"
+fi
+
+# Check for DUO_APPKEY parameter
+if [ -n "${DUO_API_HOSTNAME}" ]
+then
+    if [ -z "${DUO_APPKEY}" ]
+    then
+        log "DUO API Hostname was provided (-d), but an application key was (-K), assuming new/standalone instance"
+        yum -y install pwgen
+        DUO_APPKEY="$(pwgen 40 1)" 
+    fi
 fi
 
 
@@ -542,6 +588,35 @@ then
             log "Warning: Unknown RBAC support in this GUAC version, ${GUAC_VERSION}. Only 0.9.7 or 0.9.9 are known to work!"
         fi
     fi
+fi
+
+if [ -n "${DUO_API_HOSTNAME}" ]
+then
+    # Install the Guacamole DUO auth extension
+    log "Downloading Guacmole DUO extension"
+    GUAC_DUO="guacamole-auth-duo-${GUAC_VERSION}"
+    cd /root
+    retry 5 wget --timeout=10 \
+        "${GUAC_EXTENSIONS}/${GUAC_DUO}.tar.gz" || \
+        die "Could not download duo extension"
+
+    log "Extracting Guacamole duo extension"
+    cd /root
+    tar -xvf "${GUAC_DUO}.tar.gz" || \
+        die "Could not extract Guacamole duo plugin"
+
+    log "Installing Guacamole duo .jar file in the extensions directory"
+    cp "${GUAC_DUO}/${GUAC_DUO}.jar" "/etc/guacamole/extensions"
+    chmod 644 "/etc/guacamole/extensions/""${GUAC_DUO}.jar"
+    log "Adding the DUO auth settings to guacamole.properties"
+    (
+        echo ""
+        echo "# Properties used by the DUO Authentication plugin"
+        echo "duo-api-hostname:        ${DUO_API_HOSTNAME}"
+        echo "duo-integration-key:     ${DUO_INTKEY}"
+        echo "duo-secret-key:          ${DUO_SECRET}"
+        echo "duo-application-key:     ${DUO_APPKEY}"
+    ) >> /etc/guacamole/guacamole.properties
 fi
 
 
