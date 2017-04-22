@@ -394,11 +394,6 @@ make
 make install
 ldconfig
 
-log "Enabling services to start at next boot"
-for SVC in tomcat guacd
-do
-    chkconfig ${SVC} on
-done
 
 # Create guacamole directories as necessary
 for GUAC_DIR in "/etc/guacamole" "/etc/guacamole/extensions" "/etc/guacamole/lib"
@@ -456,7 +451,7 @@ log "Writing /etc/guacamole/logback.xml"
     printf "\n"
     printf "\t<!-- Appender for debugging -->\n"
     printf "\t<appender name=\"GUAC-DEBUG\" class=\"ch.qos.logback.core.FileAppender\">\n"
-    printf "\t\t<file>/var/lib/tomcat/webapps/ROOT/guacamole.log</file>\n"
+    printf "\t\t<file>/var/log/tomcat/guacamole.log</file>\n"
     printf "\t\t<encoder>\n"
     printf "\t\t\t<pattern>%%d{HH:mm:ss.SSS} [%%thread] %%-5level %%logger{36} - %%msg%%n</pattern>\n"
     printf "\t\t</encoder>\n"
@@ -632,6 +627,7 @@ chcon system_u:object_r:bin_t:s0 /etc/profile.d/guacamole.*
 #environment variable not working, creating symlink and copying extensions
 mkdir -p /usr/share/tomcat/.guacamole/{extensions,lib}
 ln -s /etc/guacamole/guacamole.properties /usr/share/tomcat/.guacamole/
+ln -s /etc/guacamole/logback.xml /usr/share/tomcat/.guacamole/
 cp /etc/guacamole/extensions/guacamole-auth-* /usr/share/tomcat/.guacamole/extensions/
 
 
@@ -680,10 +676,11 @@ firewall-cmd --zone=public --permanent --add-service=https
 #iptables -A INPUT -j REJECT --reject-with icmp-host-prohibited
 #service iptables save
 
-#Build self signed cert 
+#Build self signed cert install apache
+log "Creating dummy self-signed cert"
 yum -y install mod_ssl openssl httpd
-openssl req -nodes -newkey rsa:2048 -keyout ca.key -out ca.csr -subj "/C=US/ST=ST/L=Loc/O=Org/OU=OU/CN=guac"
-openssl x509 -req -days 365 -in ca.csr -signkey ca.key -out ca.crt
+openssl req -nodes -sha256 -newkey rsa:2048 -keyout ca.key -out ca.csr -subj "/C=US/ST=ST/L=Loc/O=Org/OU=OU/CN=guac"
+openssl x509 -req -sha256 -days 365 -in ca.csr -signkey ca.key -out ca.crt
 cp ca.crt /etc/pki/tls/certs/
 cp ca.key /etc/pki/tls/private/
 cp ca.csr /etc/pki/tls/private/
@@ -723,6 +720,8 @@ log "Writing new /etc/httpd/conf.d/ssl.conf"
     printf "\n"
     printf "ProxyRequests Off\n"
     printf "ProxyPreserveHost On\n"
+    printf "ProxyPass / ws://localhost:8080/\n"
+    printf "ProxyPassReverse / ws://localhost:8080/\n"
     printf "ProxyPass / http://localhost:8080/\n"
     printf "ProxyPassReverse / http://localhost:8080/\n"
     printf "\n"
@@ -731,8 +730,8 @@ log "Writing new /etc/httpd/conf.d/ssl.conf"
 chmod 644 /etc/httpd/conf.d/ssl.conf
 
 # Start services
-log "Attempting to start proxy-related services"
-for SVC in rsyslog guacd tomcat httpd
+log "Attempting to start services"
+for SVC in rsyslog guacd tomcat httpd ntpd
 do
     log "Stopping and starting ${SVC}"
     /sbin/service ${SVC} stop && /sbin/service ${SVC} start
@@ -742,7 +741,12 @@ do
     fi
 done
 
-chkconfig httpd on
+log "Enabling services to start at next boot"
+for SVC in tomcat guacd httpd ntpd
+do
+    chkconfig ${SVC} on
+done
+
 
 #Add custom URLs to Guacamole login page, change is not stateful due to sed pattern to be matched/replaced
 if ( [[ -n "${URL_1}" ]] || [[ -n "${URL_2}" ]] )
