@@ -129,6 +129,8 @@ usage()
   -K  Application key required for configuration of Duo extension.  Value must be
       at least 40 characters.  If -d is specified but -K is not, a random application
       key will be generated for you.
+  -c  URL from which to download untrusted LDAP server public certificate
+      to be added to tomcat cacerts store for LDAPS connection.
 EOT
 }  # ----------  end of function usage  ----------
 
@@ -154,10 +156,11 @@ DUO_API_HOSTNAME=
 DUO_INTKEY=
 DUO_SECRET=
 DUO_APPKEY=
+LDAP_CERT=
 
 
 # Parse command-line parameters
-while getopts :hH:D:U:R:A:C:P:v:G:g:S:s:L:T:l:t:d:I:i:K: opt
+while getopts :hH:D:U:R:A:C:P:v:G:g:S:s:L:T:l:t:d:I:i:K:c: opt
 do
     case "${opt}" in
         h)
@@ -223,6 +226,9 @@ do
             ;;
         K)
             DUO_APPKEY="${OPTARG}"
+            ;;
+        c)
+            LDAP_CERT="${OPTARG}"
             ;;
         \?)
             usage
@@ -550,16 +556,46 @@ then
     rm -rf "/etc/guacamole/extensions/*"
     cp "${GUAC_LDAP}/${GUAC_LDAP}.jar" "/etc/guacamole/extensions"
     chmod 644 "/etc/guacamole/extensions/""${GUAC_LDAP}.jar"
-    log "Adding the LDAP auth settings to guacamole.properties"
-    (
-        echo ""
-        echo "# Properties used by the LDAP Authentication plugin"
-        echo "ldap-hostname:           ${LDAP_HOSTNAME}"
-        echo "ldap-port:               ${LDAP_PORT}"
-        echo "ldap-user-base-dn:       ${LDAP_USER_BASE},${LDAP_DOMAIN_DN}"
-        echo "ldap-username-attribute: ${LDAP_USER_ATTRIBUTE}"
-        echo "ldap-config-base-dn:     ${LDAP_CONFIG_BASE},${LDAP_DOMAIN_DN}"
-    ) >> /etc/guacamole/guacamole.properties
+
+    if [[ ${LDAP_PORT} -eq 389 ]] 
+    then 
+        log "Adding the LDAP auth settings to guacamole.properties"
+        (
+            echo ""
+            echo "# Properties used by the LDAP Authentication plugin"
+            echo "ldap-hostname:           ${LDAP_HOSTNAME}"
+            echo "ldap-port:               ${LDAP_PORT}"
+            echo "ldap-user-base-dn:       ${LDAP_USER_BASE},${LDAP_DOMAIN_DN}"
+            echo "ldap-username-attribute: ${LDAP_USER_ATTRIBUTE}"
+            echo "ldap-config-base-dn:     ${LDAP_CONFIG_BASE},${LDAP_DOMAIN_DN}"
+        ) >> /etc/guacamole/guacamole.properties
+    else 
+        log "Adding the LDAPS auth settings to guacamole.properties"
+        (
+            echo ""
+            echo "# Properties used by the LDAP Authentication plugin"
+            echo "ldap-hostname:           ${LDAP_HOSTNAME}"
+            echo "ldap-port:               ${LDAP_PORT}"
+            echo "ldap-encryption-method:  ssl"
+            echo "ldap-user-base-dn:       ${LDAP_USER_BASE},${LDAP_DOMAIN_DN}"
+            echo "ldap-username-attribute: ${LDAP_USER_ATTRIBUTE}"
+            echo "ldap-config-base-dn:     ${LDAP_CONFIG_BASE},${LDAP_DOMAIN_DN}"
+        ) >> /etc/guacamole/guacamole.properties
+        if [ -n "${LDAP_CERT}" ]
+        then
+            log "Downloading cert for LDAP Hostname not in public chain"
+            retry 5 wget --timeout=10 \
+            "${LDAP_CERT}" || \
+            die "Could not download ldap cert"
+            log "Adding LDAP Cert to tomcat cacerts"
+            #centos7 path to cacerts file, other OS may differ
+            keytool -import -trustcacerts -keystore /etc/pki/ca-trust/extracted/java/cacerts -storepass changeit -noprompt -alias "${LDAP_DOMAIN_DN}" -file "${LDAP_CERT}"
+            if [[ $? -ne 0 ]]
+            then
+                die "Failed to add cert to cacerts, check cert format"
+            fi
+        fi
+    fi
 
     if [ -n "$LDAP_GROUP_BASE" ]
     then
