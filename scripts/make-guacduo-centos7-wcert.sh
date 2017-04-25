@@ -331,7 +331,7 @@ MODUSER="/usr/sbin/usermod"
 log "Installing EPEL repo"
 retry 2 yum -y install epel-release
 
-retry 5 yum -y install yum-utils yum-plugin-fastestmirror wget
+retry 5 yum -y install yum-utils yum-plugin-fastestmirror wget ntp
 
 #log "Ensuring the CentOS Base repo is available"
 #retry 5 curl -s --show-error --retry 5 -L "https://raw.githubusercontent.com/plus3it/cfn/master/scripts/CentOS-Base.repo" \
