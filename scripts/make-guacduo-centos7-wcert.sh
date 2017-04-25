@@ -585,11 +585,11 @@ then
         then
             log "Downloading cert for LDAP Hostname not in public chain"
             retry 5 wget --timeout=10 \
-            "${LDAP_CERT}" || \
+            "${LDAP_CERT}" -O ${LDAP_HOSTNAME}.cer|| \
             die "Could not download ldap cert"
             log "Adding LDAP Cert to tomcat cacerts"
             #centos7 path to cacerts file, other OS may differ
-            keytool -import -trustcacerts -keystore /etc/pki/ca-trust/extracted/java/cacerts -storepass changeit -noprompt -alias "${LDAP_DOMAIN_DN}" -file "${LDAP_CERT}"
+            keytool -import -trustcacerts -keystore /etc/pki/ca-trust/extracted/java/cacerts -storepass changeit -noprompt -alias "${LDAP_HOSTNAME}" -file "${LDAP_HOSTNAME}.cer"
             if [[ $? -ne 0 ]]
             then
                 die "Failed to add cert to cacerts, check cert format"
