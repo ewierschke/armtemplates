@@ -139,7 +139,7 @@ usage()
       query Azure key vault.
   -r  RDSH FQDN to be configured for user access from key vault script
       single entry could be single host or load balancer.
-  -K  Azure Key Vault Name that contains secrets.
+  -k  Azure Key Vault Name that contains secrets.
   -E  Azure Environment Name to use for azure-cli login, defines the azure-cli 
       endpoints to use.  If not provided default AzureCloud is unchanged.
 EOT
@@ -176,7 +176,7 @@ AZ_KEYVAULT_NAME=
 AZ_ENV=
 
 # Parse command-line parameters
-while getopts :hH:D:U:R:A:C:P:v:G:g:S:s:L:T:l:t:d:I:i:K:c:V:p:e:r:K:E: opt
+while getopts :hH:D:U:R:A:C:P:v:G:g:S:s:L:T:l:t:d:I:i:K:c:V:p:e:r:k:E: opt
 do
     case "${opt}" in
         h)
@@ -258,7 +258,7 @@ do
         r)
             RDP_FQDN="${OPTARG}"
             ;;
-        K)
+        k)
             AZ_KEYVAULT_NAME="${OPTARG}"
             ;;
         E)
@@ -611,7 +611,7 @@ then
     log "Downloading users-from-keyvault script"
     wget https://raw.githubusercontent.com/ewierschke/armtemplates/runwincustdata/scripts/guac-users-from-keyvault.sh
     chmod 744 guac-users-from-keyvault.sh
-    ./guac-users-from-keyvault.sh -V "${AZAD_SVC_PRIN_ID}" -p "${AZAD_SVC_PRIN_PASS}" -e "${AZAD_TENANT_ID}" -r "${RDP_FQDN}" -K "${AZ_KEYVAULT_NAME} -E "${AZ_ENV}"
+    ./guac-users-from-keyvault.sh -V "${AZAD_SVC_PRIN_ID}" -p "${AZAD_SVC_PRIN_PASS}" -e "${AZAD_TENANT_ID}" -r "${RDP_FQDN}" -k "${AZ_KEYVAULT_NAME}" -E "${AZ_ENV}"
         if [[ $? -ne 0 ]]
         then
             die "Execution of users-from-keyvault failed"
