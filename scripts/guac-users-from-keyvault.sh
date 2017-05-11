@@ -168,12 +168,14 @@ fi
 retry 2 yum -y install yum-utils
 retry 2 yum -y install https://centos7.iuscommunity.org/ius-release.rpm
 # Install Python 3.6 and other azure-cli deps
+log "Installing Python 3.6 and Azure CLI deps"
 retry 2 yum -y install python36u python36u-pip python36u-devel openssl-devel libffi-devel gcc jq
 mkdir environments
 cd environments
 python3.6 -m venv my_env
 source my_env/bin/activate
 # Install azure-cli in virtual environment
+log "Installing Azure CLI"
 pip3.6 install azure-cli
 
 # Set Azure Environment 
@@ -228,6 +230,7 @@ log "Writing closing section of /etc/guacamole/user-mapping.xml"
     printf "</user-mapping>\n"
 ) >> /etc/guacamole/user-mapping.xml
 
+log "Creating symlink for user-mapping.xml"
 ln -s /etc/guacamole/user-mapping.xml /usr/share/tomcat/.guacamole/
 
 #log "Adding the basic user mapping setting to guacamole.properties"
