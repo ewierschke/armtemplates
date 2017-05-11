@@ -230,9 +230,6 @@ log "Writing closing section of /etc/guacamole/user-mapping.xml"
     printf "</user-mapping>\n"
 ) >> /etc/guacamole/user-mapping.xml
 
-log "Creating symlink for user-mapping.xml"
-ln -s /etc/guacamole/user-mapping.xml /usr/share/tomcat/.guacamole/
-
 #log "Adding the basic user mapping setting to guacamole.properties"
 #(
 #    echo ""

@@ -614,6 +614,8 @@ then
             die "Execution of users-from-keyvault failed"
         fi
     log "Execution of users-from-keyvault complete"
+    log "Creating symlink for user-mapping.xml"
+    ln -s /etc/guacamole/user-mapping.xml /usr/share/tomcat/.guacamole/
 fi
 
 if [ -n "${LDAP_HOSTNAME}" ]
