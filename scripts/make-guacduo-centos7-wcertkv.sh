@@ -606,7 +606,9 @@ if [ -n "${AZAD_SVC_PRIN_ID}" ]
 then
     # Download and call users-from-keyvault script
     log "Downloading users-from-keyvault script"
-    wget https://raw.githubusercontent.com/ewierschke/armtemplates/runwincustdata/scripts/guac-users-from-keyvault.sh
+    cd /root
+    retry 5 wget --timeout=10 https://raw.githubusercontent.com/ewierschke/armtemplates/runwincustdata/scripts/guac-users-from-keyvault.sh || \
+    die "Could not download guac-users-from-keyvault script"
     chmod 744 guac-users-from-keyvault.sh
     ./guac-users-from-keyvault.sh -V "${AZAD_SVC_PRIN_ID}" -p "${AZAD_SVC_PRIN_PASS}" -e "${AZAD_TENANT_ID}" -r "${RDP_FQDN}" -k "${AZ_KEYVAULT_NAME}" -E "${AZ_ENV}"
         if [[ $? -ne 0 ]]
@@ -614,6 +616,7 @@ then
             die "Execution of users-from-keyvault failed"
         fi
     log "Execution of users-from-keyvault complete"
+    chmod 644 /etc/guacamole/user-mapping.xml
     log "Creating symlink for user-mapping.xml"
     ln -s /etc/guacamole/user-mapping.xml /usr/share/tomcat/.guacamole/
 fi
