@@ -368,15 +368,12 @@ then
 elif [ -n "${AZAD_SVC_PRIN_PASS}" ]
 then
     die "Azure AD Service Principal Password was provided (-p), but the Azure AD Service Principal provided (-V) was not"
-fi
 elif [ -n "${AZAD_TENANT_ID}" ]
 then
     die "Azure AD Tenant ID was provided (-e), but the Azure AD Service Principal provided (-V) was not"
-fi
 elif [ -n "${RDP_FQDN}" ]
 then
     die "RDP FQDN was provided (-r), but the Azure AD Service Principal provided (-V) was not"
-fi
 elif [ -n "${AZ_KEYVAULT_NAME}" ]
 then
     die "Azure Key Vault name was provided (-K), but the Azure AD Service Principal provided (-V) was not"
