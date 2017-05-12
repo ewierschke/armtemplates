@@ -1,12 +1,31 @@
+#Get Parameters
+param (
+    [Parameter(Mandatory=$True,ValueFromPipelineByPropertyName=$true)]
+    [Security.SecureString]$SvcPrincipal,
+
+    [Parameter(Mandatory=$True,ValueFromPipelineByPropertyName=$true)]
+    [Security.SecureString]$SvcPrincipalPass,
+
+    [Parameter(Mandatory=$True,ValueFromPipelineByPropertyName=$true)]
+    [Security.SecureString]$AZADTenantID,
+
+    [Parameter(Mandatory=$True,ValueFromPipelineByPropertyName=$true)]
+    [Security.SecureString]$KeyVaultName,
+
+    [Parameter(Mandatory=$False,ValueFromPipelineByPropertyName=$true)]
+    [Security.SecureString]$AZEnv
+)
+
 # Define System variables
-$FirstRDSHDir = "${env:SystemDrive}\FirstRDSH"
-$FirstRDSHLogDir = "${FirstRDSHDir}\Logs"
-$LogSource = "FirstRDSH"
+$CreateLclUsersfromKVDir = "${env:SystemDrive}\CreateLclUsersfromKV"
+$CreateLclUsersfromKVLogDir = "${CreateLclUsersfromKVDir}\Logs"
+$LogSource = "CreateLclUsersfromKV"
 $DateTime = $(get-date -format "yyyyMMdd_HHmm_ss")
-$FirstRDSHLogFile = "${FirstRDSHLogDir}\firstrdsh-log_${DateTime}.txt"
+$CreateLclUsersfromKVLogFile = "${CreateLclUsersfromKVLogDir}\CreateLclUsersfromKV-log_${DateTime}.txt"
 $ScriptName = $MyInvocation.mycommand.name
 $ErrorActionPreference = "Stop"
-$nextscript = "configure-rdsh"
+$nextscript = "firstrdsh"
+$jqfolder = "${env:SystemDrive}\jqtemp"
 
 # Define Functions
 function log {
@@ -82,15 +101,15 @@ function Set-OutputBuffer($Width=10000) {
 }
 
 # Begin Script
-# Create the FirstRDSH log directory
-New-Item -Path $FirstRDSHDir -ItemType "directory" -Force 2>&1 > $null
-New-Item -Path $FirstRDSHLogDir -ItemType "directory" -Force 2>&1 > $null
+# Create the CreateLclUsersfromKV log directory
+New-Item -Path $CreateLclUsersfromKVDir -ItemType "directory" -Force 2>&1 > $null
+New-Item -Path $CreateLclUsersfromKVLogDir -ItemType "directory" -Force 2>&1 > $null
 # Increase the screen width to avoid line wraps in the log file
 Set-OutputBuffer -Width 10000
 # Start a transcript to record script output
-Start-Transcript $FirstRDSHLogFile
+Start-Transcript $CreateLclUsersfromKVLogFile
 
-# Create a "FirstRDSH" event log source
+# Create a "CreateLclUsersfromKV" event log source
 try {
     New-EventLog -LogName Application -Source "${LogSource}"
 } catch {
@@ -107,24 +126,48 @@ try {
 
 # Get the next script
 log -LogTag ${ScriptName} "Downloading ${nextscript}.ps1"
-Invoke-Webrequest "https://raw.githubusercontent.com/ewierschke/armtemplates/runwincustdata/scripts/${nextscript}.ps1" -Outfile "${FirstRDSHDir}\${nextscript}.ps1";
+Invoke-Webrequest "https://raw.githubusercontent.com/ewierschke/armtemplates/runwincustdata/scripts/${nextscript}.ps1" -Outfile "${CreateLclUsersfromKVDir}\${nextscript}.ps1";
 
 # Do the work
-#Install RDSH features
-log -LogTag ${ScriptName} "Installing RDSH features"
-powershell.exe "Install-WindowsFeature RDS-RD-Server,RDS-Licensing -Verbose";
+#Install Azure Powershell
+Update-Help
+Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
+Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+Install-Module AzureRM
+Import-Module AzureRM
+Disable-AzureDataCollection
+#Login to Azure using ServicePrincipal
+$secpassword = ConvertTo-SecureString "${SvcPrincipalPass}" -AsPlainText -Force
+$pscredential = New-Object System.Management.Automation.PSCredential ("${SvcPrincipal}", $secpassword)
+Login-AzureRMAccount -ServicePrincipal -Credential $pscredential -TenantId "${AZADTenantID}" -Environment "${AZEnv}"
+#Get usernames from list of Secrets
+$secrets = Get-AzureKeyVaultSecret -vaultname "${KeyVaultName}" | ConvertTo-Json | "${jqfolder}"\jq-win64.exe -r '.[] | .Name'
+$count=$secrets.Count
+#Loop through usernames to create and add to local Administrators group
+v=0
+For ($c=1; $c -le $count; $c++) {
+    $pass = Get-AzureKeyVaultSecret -VaultName '"${KeyVaultName}"' -Name $secrets[0]
+    $thispass = ConvertTo-SecureString $pass.SecretValueText -AsPlainText -Force
+    New-LocalUser -Name $secrets[v] -Password $thispass
+    $Computer = $env:COMPUTERNAME
+    $ADSI = [ADSI]("WinNT://$Computer")
+    $User = $ADSI.Children.Find($secrets[v], 'user')
+    $AdminGroup = [ADSI]"WinNT://$Computer/Administrators,group"
+    $AdminGroup.Add($User.Path)
+    $v=($v+1)
+}
 
 # Remove previous scheduled task
 log -LogTag ${ScriptName} "UnRegistering previous scheduled task"
 Unregister-ScheduledTask -TaskName "RunNextScript" -Confirm:$false;
 
-#Create an atlogon scheduled task to run next script
+# Create an atlogon scheduled task to run next script
 log -LogTag ${ScriptName} "Registering a scheduled task at startup to run the next script"
 $msg = "Please upgrade Powershell and try again."
 
 $taskname = "RunNextScript"
 if ($PSVersionTable.psversion.major -ge 4) {
-    $A = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-ExecutionPolicy Bypass ${FirstRDSHDir}\${nextscript}.ps1"
+    $A = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-ExecutionPolicy Bypass ${CreateLclUsersfromKVDir}\${nextscript}.ps1"
     $T = New-ScheduledTaskTrigger -AtStartup
     $P = New-ScheduledTaskPrincipal -UserId "NT AUTHORITY\SYSTEM" -RunLevel "Highest" -LogonType "ServiceAccount"
     $S = New-ScheduledTaskSettingsSet

@@ -142,6 +142,7 @@ $null = Start-Process -FilePath ${GitInstaller} -ArgumentList ${GitParams} -Pass
 
 #(new-object Net.WebClient).DownloadString("http://psget.net/GetPsGet.ps1") | iex
 
+# Remove previous scheduled task
 Unregister-ScheduledTask -TaskName "RunNextScript" -Confirm:$false;
 
 # Restart

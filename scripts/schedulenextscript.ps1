@@ -105,7 +105,8 @@ try {
     }
 }
 
-log -LogTag ${ScriptName} "Downloading firstrdsh.ps1"
+# Get the next script
+log -LogTag ${ScriptName} "Downloading ${nextscript}.ps1"
 Invoke-Webrequest "https://raw.githubusercontent.com/ewierschke/armtemplates/runwincustdata/scripts/${nextscript}.ps1" -Outfile "${ScheduleNextScriptDir}\${nextscript}.ps1";
 
 #Create an atlogon scheduled task to run next script

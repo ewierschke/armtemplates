@@ -1,12 +1,31 @@
+#Get Parameters
+param (
+    [Parameter(Mandatory=$True,ValueFromPipelineByPropertyName=$true)]
+    [Security.SecureString]$SvcPrincipal,
+
+    [Parameter(Mandatory=$True,ValueFromPipelineByPropertyName=$true)]
+    [Security.SecureString]$SvcPrincipalPass,
+
+    [Parameter(Mandatory=$True,ValueFromPipelineByPropertyName=$true)]
+    [Security.SecureString]$AZADTenantID,
+
+    [Parameter(Mandatory=$True,ValueFromPipelineByPropertyName=$true)]
+    [Security.SecureString]$KeyVaultName,
+
+    [Parameter(Mandatory=$False,ValueFromPipelineByPropertyName=$true)]
+    [Security.SecureString]$AZEnv
+)
+
 # Define System variables
-$FirstRDSHDir = "${env:SystemDrive}\FirstRDSH"
-$FirstRDSHLogDir = "${FirstRDSHDir}\Logs"
-$LogSource = "FirstRDSH"
+$PrepforLclUsersfromKVDir = "${env:SystemDrive}\PrepforLclUsersfromKV"
+$PrepforLclUsersfromKVLogDir = "${PrepforLclUsersfromKVDir}\Logs"
+$LogSource = "PrepforLclUsersfromKV"
 $DateTime = $(get-date -format "yyyyMMdd_HHmm_ss")
-$FirstRDSHLogFile = "${FirstRDSHLogDir}\firstrdsh-log_${DateTime}.txt"
+$PrepforLclUsersfromKVLogFile = "${PrepforLclUsersfromKVLogDir}\PrepforLclUsersfromKV-log_${DateTime}.txt"
 $ScriptName = $MyInvocation.mycommand.name
 $ErrorActionPreference = "Stop"
-$nextscript = "configure-rdsh"
+$nextscript = "createlclusersfromkv"
+$jqfolder = "${env:SystemDrive}\jqtemp"
 
 # Define Functions
 function log {
@@ -82,15 +101,15 @@ function Set-OutputBuffer($Width=10000) {
 }
 
 # Begin Script
-# Create the FirstRDSH log directory
-New-Item -Path $FirstRDSHDir -ItemType "directory" -Force 2>&1 > $null
-New-Item -Path $FirstRDSHLogDir -ItemType "directory" -Force 2>&1 > $null
+# Create the PrepforLclUsersfromKV log directory
+New-Item -Path $PrepforLclUsersfromKVDir -ItemType "directory" -Force 2>&1 > $null
+New-Item -Path $PrepforLclUsersfromKVLogDir -ItemType "directory" -Force 2>&1 > $null
 # Increase the screen width to avoid line wraps in the log file
 Set-OutputBuffer -Width 10000
 # Start a transcript to record script output
-Start-Transcript $FirstRDSHLogFile
+Start-Transcript $PrepforLclUsersfromKVLogFile
 
-# Create a "FirstRDSH" event log source
+# Create a "PrepforLclUsersfromKV" event log source
 try {
     New-EventLog -LogName Application -Source "${LogSource}"
 } catch {
@@ -107,24 +126,24 @@ try {
 
 # Get the next script
 log -LogTag ${ScriptName} "Downloading ${nextscript}.ps1"
-Invoke-Webrequest "https://raw.githubusercontent.com/ewierschke/armtemplates/runwincustdata/scripts/${nextscript}.ps1" -Outfile "${FirstRDSHDir}\${nextscript}.ps1";
+Invoke-Webrequest "https://raw.githubusercontent.com/ewierschke/armtemplates/runwincustdata/scripts/${nextscript}.ps1" -Outfile "${PrepforLclUsersfromKVDir}\${nextscript}.ps1";
 
 # Do the work
-#Install RDSH features
-log -LogTag ${ScriptName} "Installing RDSH features"
-powershell.exe "Install-WindowsFeature RDS-RD-Server,RDS-Licensing -Verbose";
+#Download WMF5.1 and JQ
+log -LogTag ${ScriptName} "Downloading WMF5.1"
+Invoke-Webrequest "https://s3.amazonaws.com/app-chemistry/files/Win8.1AndW2K12R2-KB3191564-x64.msu" -Outfile "${PrepforLclUsersfromKVDir}\Win8.1AndW2K12R2-KB3191564-x64.msu";
+log -LogTag ${ScriptName} "Downloading jq"
+Invoke-Webrequest "https://s3.amazonaws.com/app-chemistry/files/jq-win64.exe" -Outfile "${jqfolder}\jq-win64.exe";
+#Install WMF5.1
+wusa "${PrepforLclUsersfromKVDir}\Win8.1AndW2K12R2-KB3191564-x64.msu" /quiet /norestart
 
-# Remove previous scheduled task
-log -LogTag ${ScriptName} "UnRegistering previous scheduled task"
-Unregister-ScheduledTask -TaskName "RunNextScript" -Confirm:$false;
-
-#Create an atlogon scheduled task to run next script
+# Create an atlogon scheduled task to run next script
 log -LogTag ${ScriptName} "Registering a scheduled task at startup to run the next script"
 $msg = "Please upgrade Powershell and try again."
 
 $taskname = "RunNextScript"
 if ($PSVersionTable.psversion.major -ge 4) {
-    $A = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-ExecutionPolicy Bypass ${FirstRDSHDir}\${nextscript}.ps1"
+    $A = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-ExecutionPolicy Bypass ${PrepforLclUsersfromKVDir}\${nextscript}.ps1 ${SvcPrincipal} ${SvcPrincipalPass} ${AZADTenantID} ${KeyVaultName} ${AZEnv}"
     $T = New-ScheduledTaskTrigger -AtStartup
     $P = New-ScheduledTaskPrincipal -UserId "NT AUTHORITY\SYSTEM" -RunLevel "Highest" -LogonType "ServiceAccount"
     $S = New-ScheduledTaskSettingsSet
