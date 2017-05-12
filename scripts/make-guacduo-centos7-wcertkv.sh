@@ -617,8 +617,6 @@ then
         fi
     log "Execution of users-from-keyvault complete"
     chmod 644 /etc/guacamole/user-mapping.xml
-    log "Creating symlink for user-mapping.xml"
-    ln -s /etc/guacamole/user-mapping.xml /usr/share/tomcat/.guacamole/
 fi
 
 if [ -n "${LDAP_HOSTNAME}" ]
@@ -746,9 +744,12 @@ log "Setting SEL contexts on shell-init files"
 chcon system_u:object_r:bin_t:s0 /etc/profile.d/guacamole.*
 
 #environment variable not working, creating symlink and copying extensions
+log "Creating symlinks for guacamole files"
 mkdir -p /usr/share/tomcat/.guacamole/{extensions,lib}
 ln -s /etc/guacamole/guacamole.properties /usr/share/tomcat/.guacamole/
 ln -s /etc/guacamole/logback.xml /usr/share/tomcat/.guacamole/
+ln -s /etc/guacamole/user-mapping.xml /usr/share/tomcat/.guacamole/
+
 cp /etc/guacamole/extensions/guacamole-auth-* /usr/share/tomcat/.guacamole/extensions/
 
 
