@@ -1,19 +1,19 @@
 #Get Parameters
 param (
     [Parameter(Mandatory=$True,ValueFromPipelineByPropertyName=$true)]
-    [Security.SecureString]$SvcPrincipal,
+    [String]$SvcPrincipal,
 
     [Parameter(Mandatory=$True,ValueFromPipelineByPropertyName=$true)]
-    [Security.SecureString]$SvcPrincipalPass,
+    [String]$SvcPrincipalPass,
 
     [Parameter(Mandatory=$True,ValueFromPipelineByPropertyName=$true)]
-    [Security.SecureString]$AZADTenantID,
+    [String]$AZADTenantID,
 
     [Parameter(Mandatory=$True,ValueFromPipelineByPropertyName=$true)]
-    [Security.SecureString]$KeyVaultName,
+    [String]$KeyVaultName,
 
     [Parameter(Mandatory=$False,ValueFromPipelineByPropertyName=$true)]
-    [Security.SecureString]$AZEnv
+    [String]$AZEnv
 )
 
 # Define System variables
