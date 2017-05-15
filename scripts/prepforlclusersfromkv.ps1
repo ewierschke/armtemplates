@@ -17,7 +17,7 @@ param (
 )
 
 # Define System variables
-$PrepforLclUsersfromKVDir = "${env:SystemDrive}\PrepforLclUsersfromKV"
+$PrepforLclUsersfromKVDir = "${env:SystemDrive}\1a-PrepforLclUsersfromKV"
 $PrepforLclUsersfromKVLogDir = "${PrepforLclUsersfromKVDir}\Logs"
 $LogSource = "PrepforLclUsersfromKV"
 $DateTime = $(get-date -format "yyyyMMdd_HHmm_ss")
@@ -25,7 +25,6 @@ $PrepforLclUsersfromKVLogFile = "${PrepforLclUsersfromKVLogDir}\PrepforLclUsersf
 $ScriptName = $MyInvocation.mycommand.name
 $ErrorActionPreference = "Stop"
 $nextscript = "createlclusersfromkv"
-$jqfolder = "${env:SystemDrive}\jqtemp"
 
 # Define Functions
 function log {
@@ -129,13 +128,12 @@ log -LogTag ${ScriptName} "Downloading ${nextscript}.ps1"
 Invoke-Webrequest "https://raw.githubusercontent.com/ewierschke/armtemplates/runwincustdata/scripts/${nextscript}.ps1" -Outfile "${PrepforLclUsersfromKVDir}\${nextscript}.ps1";
 
 # Do the work
-#Download WMF5.1 and JQ
+#Download WMF5.1 
 log -LogTag ${ScriptName} "Downloading WMF5.1"
-Invoke-Webrequest "https://s3.amazonaws.com/app-chemistry/files/Win8.1AndW2K12R2-KB3191564-x64.msu" -Outfile "${PrepforLclUsersfromKVDir}\Win8.1AndW2K12R2-KB3191564-x64.msu";
-log -LogTag ${ScriptName} "Downloading jq"
-Invoke-Webrequest "https://s3.amazonaws.com/app-chemistry/files/jq-win64.exe" -Outfile "${jqfolder}\jq-win64.exe";
-#Install WMF5.1
-wusa "${PrepforLclUsersfromKVDir}\Win8.1AndW2K12R2-KB3191564-x64.msu" /quiet /norestart
+Import-Module BitsTransfer
+Start-BitsTransfer -Source "https://s3.amazonaws.com/app-chemistry/files/Win8.1AndW2K12R2-KB3191564-x64.msu" -Destination "${PrepforLclUsersfromKVDir}\Win8.1AndW2K12R2-KB3191564-x64.msu";
+#Invoke-Webrequest "https://s3.amazonaws.com/app-chemistry/files/Win8.1AndW2K12R2-KB3191564-x64.msu" -Outfile "${PrepforLclUsersfromKVDir}\Win8.1AndW2K12R2-KB3191564-x64.msu";
+
 
 # Create an atlogon scheduled task to run next script
 log -LogTag ${ScriptName} "Registering a scheduled task at startup to run the next script"
@@ -152,6 +150,7 @@ if ($PSVersionTable.psversion.major -ge 4) {
 } else {
     invoke-expression "& $env:systemroot\system32\schtasks.exe /create /SC ONLOGON /RL HIGHEST /NP /V1 /RU SYSTEM /F /TR `"msg * /SERVER:%computername% ${msg}`" /TN `"${taskname}`"" 2>&1 | log -LogTag ${ScriptName}
 }
-
+#Install WMF5.1 for New-LocalUser
+log -LogTag ${ScriptName} "Installing WMF5.1"
+wusa "${PrepforLclUsersfromKVDir}\Win8.1AndW2K12R2-KB3191564-x64.msu" /quiet /forcerestart
 log -LogTag ${ScriptName} "Rebooting"
-powershell.exe "Restart-Computer -Force -Verbose";

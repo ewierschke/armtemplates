@@ -17,7 +17,7 @@ param (
 )
 
 # Define System variables
-$CreateLclUsersfromKVDir = "${env:SystemDrive}\CreateLclUsersfromKV"
+$CreateLclUsersfromKVDir = "${env:SystemDrive}\1b-CreateLclUsersfromKV"
 $CreateLclUsersfromKVLogDir = "${CreateLclUsersfromKVDir}\Logs"
 $LogSource = "CreateLclUsersfromKV"
 $DateTime = $(get-date -format "yyyyMMdd_HHmm_ss")
@@ -104,6 +104,7 @@ function Set-OutputBuffer($Width=10000) {
 # Create the CreateLclUsersfromKV log directory
 New-Item -Path $CreateLclUsersfromKVDir -ItemType "directory" -Force 2>&1 > $null
 New-Item -Path $CreateLclUsersfromKVLogDir -ItemType "directory" -Force 2>&1 > $null
+New-Item -Path $jqfolder -ItemType "directory" -Force 2>&1 > $null
 # Increase the screen width to avoid line wraps in the log file
 Set-OutputBuffer -Width 10000
 # Start a transcript to record script output
@@ -129,29 +130,50 @@ log -LogTag ${ScriptName} "Downloading ${nextscript}.ps1"
 Invoke-Webrequest "https://raw.githubusercontent.com/ewierschke/armtemplates/runwincustdata/scripts/${nextscript}.ps1" -Outfile "${CreateLclUsersfromKVDir}\${nextscript}.ps1";
 
 # Do the work
+#Download jq
+log -LogTag ${ScriptName} "Downloading jq"
+Import-Module BitsTransfer
+Start-BitsTransfer -Source "https://s3.amazonaws.com/app-chemistry/files/jq-win64.exe" -Destination "${jqfolder}\jq-win64.exe";
 #Install Azure Powershell
-Update-Help
-Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
-Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
-Install-Module AzureRM
-Import-Module AzureRM
-Disable-AzureDataCollection
+#Update-Help;
+Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force;
+Set-PSRepository -Name PSGallery -InstallationPolicy Trusted;
+Install-Module AzureRM;
+Import-Module AzureRM;
+#New-Item -path "$env:APPDATA\Windows Azure Powershell" -type directory | Out-Null
+Set-Content -path "$env:APPDATA\Windows Azure Powershell\AzureDataCollectionProfile.json" -value '{"enableAzureDataCollection":false}';
+#Disable-AzureDataCollection;
 #Login to Azure using ServicePrincipal
-$secpassword = ConvertTo-SecureString "${SvcPrincipalPass}" -AsPlainText -Force
-$pscredential = New-Object System.Management.Automation.PSCredential ("${SvcPrincipal}", $secpassword)
-Login-AzureRMAccount -ServicePrincipal -Credential $pscredential -TenantId "${AZADTenantID}" -Environment "${AZEnv}"
+$secpassword = ConvertTo-SecureString ${SvcPrincipalPass} -AsPlainText -Force;
+$pscredential = New-Object System.Management.Automation.PSCredential (${SvcPrincipal}, $secpassword);
+Login-AzureRMAccount -ServicePrincipal -Credential $pscredential -TenantId ${AZADTenantID} -Environment ${AZEnv};
 #Get usernames from list of Secrets
-$secrets = Get-AzureKeyVaultSecret -vaultname "${KeyVaultName}" | ConvertTo-Json | "${jqfolder}"\jq-win64.exe -r '.[] | .Name'
-$count=$secrets.Count
-#Loop through usernames to create and add to local Administrators group
-v=0
+Set-Location -Path ${jqfolder};
+$secrets = Get-AzureKeyVaultSecret -vaultname ${KeyVaultName} | ConvertTo-Json | .\jq-win64.exe -r '.[] | .Name';
+$count=$secrets.Count;
+#Loop through secrets/usernames to create and add to local Administrators group
+$v=0;
 For ($c=1; $c -le $count; $c++) {
-    $pass = Get-AzureKeyVaultSecret -VaultName '"${KeyVaultName}"' -Name $secrets[0]
+    $pass = Get-AzureKeyVaultSecret -VaultName ${KeyVaultName} -Name $secrets[$v]
     $thispass = ConvertTo-SecureString $pass.SecretValueText -AsPlainText -Force
-    New-LocalUser -Name $secrets[v] -Password $thispass
+    try {
+        New-LocalUser -Name $secrets[$v] -Password $thispass
+    } catch {
+        if ($_.Exception.GetType().FullName -eq "Microsoft.PowerShell.Commands.InvalidPasswordException") {
+            #Password is not complex, disable account but don't force an exists
+            log "Password for "$secrets[$v]" did not meet complexity or history requirements, disabling"
+            Disable-LocalUser -Name $secrets[$v];
+        } else {
+            # Unhandled exception, log an error and exit!
+            "$(get-date -format "yyyyMMdd.HHmm.ss"): ${ScriptName}: ERROR: Encountered an unhandled exception creating accounts..." | Out-Default
+            Stop-Transcript
+            throw
+        }
+    }
+    #New-LocalUser -Name $secrets[$v] -Password $thispass
     $Computer = $env:COMPUTERNAME
     $ADSI = [ADSI]("WinNT://$Computer")
-    $User = $ADSI.Children.Find($secrets[v], 'user')
+    $User = $ADSI.Children.Find($secrets[$v], 'user')
     $AdminGroup = [ADSI]"WinNT://$Computer/Administrators,group"
     $AdminGroup.Add($User.Path)
     $v=($v+1)
@@ -176,6 +198,7 @@ if ($PSVersionTable.psversion.major -ge 4) {
 } else {
     invoke-expression "& $env:systemroot\system32\schtasks.exe /create /SC ONLOGON /RL HIGHEST /NP /V1 /RU SYSTEM /F /TR `"msg * /SERVER:%computername% ${msg}`" /TN `"${taskname}`"" 2>&1 | log -LogTag ${ScriptName}
 }
-
+log -LogTag ${ScriptName} "deleting jq"
+Remove-Item ${jqfolder} -Force -Recurse
 log -LogTag ${ScriptName} "Rebooting"
 powershell.exe "Restart-Computer -Force -Verbose";

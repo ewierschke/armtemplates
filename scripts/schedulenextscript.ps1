@@ -1,5 +1,5 @@
 # Define System variables
-$ScheduleNextScriptDir = "${env:SystemDrive}\ScheduleNextScript"
+$ScheduleNextScriptDir = "${env:SystemDrive}\1-ScheduleNextScript"
 $ScheduleNextScriptLogDir = "${ScheduleNextScriptDir}\Logs"
 $LogSource = "ScheduleNextScript"
 $DateTime = $(get-date -format "yyyyMMdd_HHmm_ss")
