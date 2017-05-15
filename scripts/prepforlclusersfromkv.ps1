@@ -153,4 +153,4 @@ if ($PSVersionTable.psversion.major -ge 4) {
 #Install WMF5.1 for New-LocalUser
 log -LogTag ${ScriptName} "Installing WMF5.1"
 wusa "${PrepforLclUsersfromKVDir}\Win8.1AndW2K12R2-KB3191564-x64.msu" /quiet /forcerestart
-log -LogTag ${ScriptName} "Rebooting"
+log -LogTag ${ScriptName} "Rebooting once WMF5.1 install completes; running in background"

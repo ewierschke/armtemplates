@@ -136,14 +136,16 @@ Import-Module BitsTransfer
 Start-BitsTransfer -Source "https://s3.amazonaws.com/app-chemistry/files/jq-win64.exe" -Destination "${jqfolder}\jq-win64.exe";
 #Install Azure Powershell
 #Update-Help;
+log -LogTag ${ScriptName} "Installing AzureRM PowerShell Module"
 Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force;
 Set-PSRepository -Name PSGallery -InstallationPolicy Trusted;
 Install-Module AzureRM;
 Import-Module AzureRM;
-#New-Item -path "$env:APPDATA\Windows Azure Powershell" -type directory | Out-Null
+New-Item -path "$env:APPDATA\Windows Azure Powershell" -type directory | Out-Null
 Set-Content -path "$env:APPDATA\Windows Azure Powershell\AzureDataCollectionProfile.json" -value '{"enableAzureDataCollection":false}';
 #Disable-AzureDataCollection;
 #Login to Azure using ServicePrincipal
+log -LogTag ${ScriptName} "Logging into Azure"
 $secpassword = ConvertTo-SecureString ${SvcPrincipalPass} -AsPlainText -Force;
 $pscredential = New-Object System.Management.Automation.PSCredential (${SvcPrincipal}, $secpassword);
 Login-AzureRMAccount -ServicePrincipal -Credential $pscredential -TenantId ${AZADTenantID} -Environment ${AZEnv};
@@ -161,7 +163,8 @@ For ($c=1; $c -le $count; $c++) {
     } catch {
         if ($_.Exception.GetType().FullName -eq "Microsoft.PowerShell.Commands.InvalidPasswordException") {
             #Password is not complex, disable account but don't force an exists
-            log "Password for "$secrets[$v]" did not meet complexity or history requirements, disabling"
+            $name = $secrets[$v]
+            log "Password for $name did not meet complexity or history requirements, disabling"
             Disable-LocalUser -Name $secrets[$v];
         } else {
             # Unhandled exception, log an error and exit!
@@ -199,6 +202,7 @@ if ($PSVersionTable.psversion.major -ge 4) {
     invoke-expression "& $env:systemroot\system32\schtasks.exe /create /SC ONLOGON /RL HIGHEST /NP /V1 /RU SYSTEM /F /TR `"msg * /SERVER:%computername% ${msg}`" /TN `"${taskname}`"" 2>&1 | log -LogTag ${ScriptName}
 }
 log -LogTag ${ScriptName} "deleting jq"
+Set-Location -Path $CreateLclUsersfromKVDir;
 Remove-Item ${jqfolder} -Force -Recurse
 log -LogTag ${ScriptName} "Rebooting"
 powershell.exe "Restart-Computer -Force -Verbose";
