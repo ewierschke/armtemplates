@@ -4,9 +4,6 @@ param (
     [String]$SvcPrincipal,
 
     [Parameter(Mandatory=$True,ValueFromPipelineByPropertyName=$true)]
-    [String]$SvcPrincipalPass,
-
-    [Parameter(Mandatory=$True,ValueFromPipelineByPropertyName=$true)]
     [String]$AZADTenantID,
 
     [Parameter(Mandatory=$True,ValueFromPipelineByPropertyName=$true)]
@@ -17,7 +14,7 @@ param (
 )
 
 # Define System variables
-$PrepforLclUsersfromKVDir = "${env:SystemDrive}\1a-PrepforLclUsersfromKV"
+$PrepforLclUsersfromKVDir = "${env:SystemDrive}\buildscripts\1a-PrepforLclUsersfromKV"
 $PrepforLclUsersfromKVLogDir = "${PrepforLclUsersfromKVDir}\Logs"
 $LogSource = "PrepforLclUsersfromKV"
 $DateTime = $(get-date -format "yyyyMMdd_HHmm_ss")
@@ -132,8 +129,10 @@ Invoke-Webrequest "https://raw.githubusercontent.com/ewierschke/armtemplates/run
 log -LogTag ${ScriptName} "Downloading WMF5.1"
 Import-Module BitsTransfer
 Start-BitsTransfer -Source "https://s3.amazonaws.com/app-chemistry/files/Win8.1AndW2K12R2-KB3191564-x64.msu" -Destination "${PrepforLclUsersfromKVDir}\Win8.1AndW2K12R2-KB3191564-x64.msu";
-#Invoke-Webrequest "https://s3.amazonaws.com/app-chemistry/files/Win8.1AndW2K12R2-KB3191564-x64.msu" -Outfile "${PrepforLclUsersfromKVDir}\Win8.1AndW2K12R2-KB3191564-x64.msu";
 
+# Remove previous scheduled task
+log -LogTag ${ScriptName} "UnRegistering previous scheduled task"
+Unregister-ScheduledTask -TaskName "RunNextScript" -Confirm:$false;
 
 # Create an atlogon scheduled task to run next script
 log -LogTag ${ScriptName} "Registering a scheduled task at startup to run the next script"
@@ -141,7 +140,7 @@ $msg = "Please upgrade Powershell and try again."
 
 $taskname = "RunNextScript"
 if ($PSVersionTable.psversion.major -ge 4) {
-    $A = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-ExecutionPolicy Bypass ${PrepforLclUsersfromKVDir}\${nextscript}.ps1 ${SvcPrincipal} ${SvcPrincipalPass} ${AZADTenantID} ${KeyVaultName} ${AZEnv}"
+    $A = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-ExecutionPolicy Bypass ${PrepforLclUsersfromKVDir}\${nextscript}.ps1 ${SvcPrincipal} ${AZADTenantID} ${KeyVaultName} ${AZEnv}"
     $T = New-ScheduledTaskTrigger -AtStartup
     $P = New-ScheduledTaskPrincipal -UserId "NT AUTHORITY\SYSTEM" -RunLevel "Highest" -LogonType "ServiceAccount"
     $S = New-ScheduledTaskSettingsSet

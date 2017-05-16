@@ -1,5 +1,5 @@
 # Define System variables
-$FirstRDSHDir = "${env:SystemDrive}\2-FirstRDSH"
+$FirstRDSHDir = "${env:SystemDrive}\buildscripts\2-FirstRDSH"
 $FirstRDSHLogDir = "${FirstRDSHDir}\Logs"
 $LogSource = "FirstRDSH"
 $DateTime = $(get-date -format "yyyyMMdd_HHmm_ss")

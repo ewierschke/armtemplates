@@ -4,9 +4,6 @@ param (
     [String]$SvcPrincipal,
 
     [Parameter(Mandatory=$True,ValueFromPipelineByPropertyName=$true)]
-    [String]$SvcPrincipalPass,
-
-    [Parameter(Mandatory=$True,ValueFromPipelineByPropertyName=$true)]
     [String]$AZADTenantID,
 
     [Parameter(Mandatory=$True,ValueFromPipelineByPropertyName=$true)]
@@ -17,7 +14,7 @@ param (
 )
 
 # Define System variables
-$CreateLclUsersfromKVDir = "${env:SystemDrive}\1b-CreateLclUsersfromKV"
+$CreateLclUsersfromKVDir = "${env:SystemDrive}\buildscripts\1b-CreateLclUsersfromKV"
 $CreateLclUsersfromKVLogDir = "${CreateLclUsersfromKVDir}\Logs"
 $LogSource = "CreateLclUsersfromKV"
 $DateTime = $(get-date -format "yyyyMMdd_HHmm_ss")
@@ -26,6 +23,7 @@ $ScriptName = $MyInvocation.mycommand.name
 $ErrorActionPreference = "Stop"
 $nextscript = "firstrdsh"
 $jqfolder = "${env:SystemDrive}\jqtemp"
+$credspath = "${env:SystemDrive}\buildscripts"
 
 # Define Functions
 function log {
@@ -146,8 +144,13 @@ Set-Content -path "$env:APPDATA\Windows Azure Powershell\AzureDataCollectionProf
 #Disable-AzureDataCollection;
 #Login to Azure using ServicePrincipal
 log -LogTag ${ScriptName} "Logging into Azure"
-$secpassword = ConvertTo-SecureString ${SvcPrincipalPass} -AsPlainText -Force;
-$pscredential = New-Object System.Management.Automation.PSCredential (${SvcPrincipal}, $secpassword);
+$CredsFilePath = "${credspath}\pass.txt"
+$KeyFilePath = "${credspath}\key.txt"
+$Key = Get-Content $KeyFilePath
+$Pass = Get-Content $CredsFilePath
+$SecPassword = $Pass | ConvertTo-SecureString -Key $Key
+#$secpassword = ConvertTo-SecureString ${SvcPrincipalPass} -AsPlainText -Force;
+$pscredential = New-Object System.Management.Automation.PSCredential (${SvcPrincipal}, $SecPassword);
 Login-AzureRMAccount -ServicePrincipal -Credential $pscredential -TenantId ${AZADTenantID} -Environment ${AZEnv};
 #Get usernames from list of Secrets
 Set-Location -Path ${jqfolder};
@@ -204,5 +207,8 @@ if ($PSVersionTable.psversion.major -ge 4) {
 log -LogTag ${ScriptName} "deleting jq"
 Set-Location -Path $CreateLclUsersfromKVDir;
 Remove-Item ${jqfolder} -Force -Recurse
+log -LogTag ${ScriptName} "deleting creds"
+Remove-Item "${credspath}\pass.txt" -Force -Recurse
+Remove-Item "${credspath}\key.txt" -Force -Recurse
 log -LogTag ${ScriptName} "Rebooting"
 powershell.exe "Restart-Computer -Force -Verbose";
