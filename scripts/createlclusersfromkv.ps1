@@ -21,7 +21,7 @@ $DateTime = $(get-date -format "yyyyMMdd_HHmm_ss")
 $CreateLclUsersfromKVLogFile = "${CreateLclUsersfromKVLogDir}\CreateLclUsersfromKV-log_${DateTime}.txt"
 $ScriptName = $MyInvocation.mycommand.name
 $ErrorActionPreference = "Stop"
-$nextscript = "winwatchwsched"
+$nextscript = "firstrdsh"
 $jqfolder = "${env:SystemDrive}\jqtemp"
 $credspath = "${env:SystemDrive}\buildscripts"
 
