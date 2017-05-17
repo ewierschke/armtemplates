@@ -6,7 +6,7 @@ $DateTime = $(get-date -format "yyyyMMdd_HHmm_ss")
 $FirstRDSHLogFile = "${FirstRDSHLogDir}\firstrdsh-log_${DateTime}.txt"
 $ScriptName = $MyInvocation.mycommand.name
 $ErrorActionPreference = "Stop"
-$nextscript = "winwatchwsched"
+$nextscript = "configure-rdsh"
 
 # Define Functions
 function log {

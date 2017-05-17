@@ -1,9 +1,9 @@
 #variable for next script
-$nextscript = "configure-rdsh"
-$FirstRDSHDir = "${env:SystemDrive}\buildscripts\2-FirstRDSH"
+$nextscript = "firstrdsh"
+$WinWatchDir = "${env:SystemDrive}\buildscripts"
 
 # Get the next script
-Invoke-Webrequest "https://raw.githubusercontent.com/ewierschke/armtemplates/runwincustdata/scripts/${nextscript}.ps1" -Outfile "${FirstRDSHDir}\${nextscript}.ps1";
+Invoke-Webrequest "https://raw.githubusercontent.com/ewierschke/armtemplates/runwincustdata/scripts/${nextscript}.ps1" -Outfile "${WinWatchDir}\${nextscript}.ps1";
 
 # Remove previous scheduled task
 Unregister-ScheduledTask -TaskName "RunNextScript" -Confirm:$false;
@@ -13,7 +13,7 @@ $msg = "Please upgrade Powershell and try again."
 
 $taskname = "RunNextScript"
 if ($PSVersionTable.psversion.major -ge 4) {
-    $A = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-ExecutionPolicy Bypass ${FirstRDSHDir}\${nextscript}.ps1"
+    $A = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-ExecutionPolicy Bypass ${WinWatchDir}\${nextscript}.ps1"
     $T = New-ScheduledTaskTrigger -AtStartup
     $P = New-ScheduledTaskPrincipal -UserId "NT AUTHORITY\SYSTEM" -RunLevel "Highest" -LogonType "ServiceAccount"
     $S = New-ScheduledTaskSettingsSet
@@ -43,3 +43,5 @@ pip install --index-url="$PypiUrl" --trusted-host="$PypiHost" --allow-all-extern
 
 # Run watchmaker
 watchmaker -vv --log-dir=C:\Watchmaker\Logs
+
+powershell.exe "Restart-Computer -Force -Verbose";
