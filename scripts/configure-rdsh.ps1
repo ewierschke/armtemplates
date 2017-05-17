@@ -110,12 +110,12 @@ log -LogTag ${ScriptName} "Downloading ${nextscript}.ps1"
 Invoke-Webrequest "https://raw.githubusercontent.com/ewierschke/armtemplates/runwincustdata/scripts/${nextscript}.ps1" -Outfile "${ConfigureRDSHDir}\${nextscript}.ps1";
 
 # Do the work
-[CmdLetBinding()]
-Param(
-    $ServerFQDN,
-    $DomainNetBiosName,
-    $GroupName
-    )
+#[CmdLetBinding()]
+#Param(
+#    $ServerFQDN,
+#    $DomainNetBiosName,
+#    $GroupName
+#    )
 
 #Based on:
 # * https://s3.amazonaws.com/app-chemistry/scripts/configure-rdsh.ps1
