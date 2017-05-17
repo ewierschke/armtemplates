@@ -1,5 +1,6 @@
 #variable for next script
 $nextscript = "configure-rdsh"
+$FirstRDSHDir = "${env:SystemDrive}\buildscripts\2-FirstRDSH"
 
 # Get the next script
 Invoke-Webrequest "https://raw.githubusercontent.com/ewierschke/armtemplates/runwincustdata/scripts/${nextscript}.ps1" -Outfile "${FirstRDSHDir}\${nextscript}.ps1";
