@@ -263,17 +263,17 @@ Unregister-ScheduledTask -TaskName "RunNextScript" -Confirm:$false;
 log -LogTag ${ScriptName} "Registering a scheduled task at startup to run the next script"
 $msg = "Please upgrade Powershell and try again."
 
-#$taskname = "RunNextScript"
-#if ($PSVersionTable.psversion.major -ge 4) {
-#    $A = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-ExecutionPolicy Bypass $ConfigureRDSHDir\${nextscript}.ps1"
-#    $T = New-ScheduledTaskTrigger -AtStartup
-#    $P = New-ScheduledTaskPrincipal -UserId "NT AUTHORITY\SYSTEM" -RunLevel "Highest" -LogonType "ServiceAccount"
-#    $S = New-ScheduledTaskSettingsSet
-#    $D = New-ScheduledTask -Action $A -Principal $P -Trigger $T -Settings $S
-#    Register-ScheduledTask -TaskName $taskname -InputObject $D 2>&1 | log -LogTag ${ScriptName}
-#} else {
-#    invoke-expression "& $env:systemroot\system32\schtasks.exe /create /SC ONLOGON /RL HIGHEST /NP /V1 /RU SYSTEM /F /TR `"msg * /SERVER:%computername% ${msg}`" /TN `"${taskname}`"" 2>&1 | log -LogTag ${ScriptName}
-#}
+$taskname = "RunNextScript"
+if ($PSVersionTable.psversion.major -ge 4) {
+    $A = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-ExecutionPolicy Bypass $ConfigureRDSHDir\${nextscript}.ps1"
+    $T = New-ScheduledTaskTrigger -AtStartup
+    $P = New-ScheduledTaskPrincipal -UserId "NT AUTHORITY\SYSTEM" -RunLevel "Highest" -LogonType "ServiceAccount"
+    $S = New-ScheduledTaskSettingsSet
+    $D = New-ScheduledTask -Action $A -Principal $P -Trigger $T -Settings $S
+    Register-ScheduledTask -TaskName $taskname -InputObject $D 2>&1 | log -LogTag ${ScriptName}
+} else {
+    invoke-expression "& $env:systemroot\system32\schtasks.exe /create /SC ONLOGON /RL HIGHEST /NP /V1 /RU SYSTEM /F /TR `"msg * /SERVER:%computername% ${msg}`" /TN `"${taskname}`"" 2>&1 | log -LogTag ${ScriptName}
+}
 
 log -LogTag ${ScriptName} "Rebooting"
 powershell.exe "Restart-Computer -Force -Verbose";
