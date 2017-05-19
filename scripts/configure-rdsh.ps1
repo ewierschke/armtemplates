@@ -284,7 +284,7 @@ $LclAdminKey = Get-Content $LclAdminKeyFilePath;
 $LclAdminPass = Get-Content $LclAdminCredsFilePath;
 $SecPassword = $LclAdminPass | ConvertTo-SecureString -Key $LclAdminKey;
 $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecPassword);
-$adminpass = [System.Runtime.InteropsServices.Marshal]::PtrToStringAuto($BSTR);
+$adminpass = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR);
 Set-ScheduledTask -User "$Computer\$Username" -Password $adminpass -TaskName $taskname;
 #todo-add test for failure... if failure disable task, only remote-items if success
 log -LogTag ${ScriptName} "deleting creds"
