@@ -184,7 +184,7 @@ then
     az cloud set --name "${AZ_ENV}"
 fi
 # Login to Azure
-az login --service-principal -u "${AZAD_SVC_PRIN_ID}" --password "${AZAD_SVC_PRIN_PASS}" --tenant "${AZAD_TENANT_ID}"
+az login --service-principal -u "${AZAD_SVC_PRIN_ID}" --password "${AZAD_SVC_PRIN_PASS}" --tenant "${AZAD_TENANT_ID}" --allow-no-subscriptions
     if [[ $? -ne 0 ]]
     then
         die "Login to azure-cli failed"
