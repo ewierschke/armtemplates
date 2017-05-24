@@ -93,8 +93,7 @@ If rebootMayBeRequired = true Then
 End If
 
 WScript.Echo  vbCRLF & "Would you like to install updates now? (Y/N)"
-strInput = WScript.StdIn.Readline
-WScript.Echo 
+strInput = "Y"
 
 If (strInput = "Y" or strInput = "y") Then
     WScript.Echo "Installing updates..."
