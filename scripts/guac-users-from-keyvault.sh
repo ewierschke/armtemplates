@@ -177,6 +177,7 @@ source my_env/bin/activate
 # Install azure-cli in virtual environment
 log "Installing Azure CLI"
 pip3.6 install azure-cli
+pip3.6 install --upgrade urllib3
 
 # Set Azure Environment 
 if [ -n "${AZ_ENV}" ]
@@ -184,7 +185,7 @@ then
     az cloud set --name "${AZ_ENV}"
 fi
 # Login to Azure
-az login --service-principal -u "${AZAD_SVC_PRIN_ID}" --password "${AZAD_SVC_PRIN_PASS}" --tenant "${AZAD_TENANT_ID}" --allow-no-subscriptions
+az login --service-principal -u "${AZAD_SVC_PRIN_ID}" --password "${AZAD_SVC_PRIN_PASS}" --tenant "${AZAD_TENANT_ID}"
     if [[ $? -ne 0 ]]
     then
         die "Login to azure-cli failed"
