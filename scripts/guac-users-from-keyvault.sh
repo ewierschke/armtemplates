@@ -221,8 +221,8 @@ do
         printf "\t\t\t<param name=\"ignore-cert\">true</param>\n"
         printf "\t\t\t<param name=\"server-layout\">en-us-qwerty</param>\n"
         printf "\t\t\t<param name=\"security\">nla</param>\n"
-        printf "\t\t\t<param name=\"username\">${GUAC_USERNAME}</param>\n"
-        printf "\t\t\t<param name=\"password\">${GUAC_PASSWORD}</param>\n"
+        printf "\t\t\t<param name=\"username\">\${GUAC_USERNAME}</param>\n"
+        printf "\t\t\t<param name=\"password\">\${GUAC_PASSWORD}</param>\n"
         printf "\t</authorize>\n"
 
     ) >> /etc/guacamole/user-mapping.xml
