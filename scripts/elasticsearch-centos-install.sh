@@ -207,9 +207,8 @@ install_java()
     RETRY=0
     while [ $RETRY -lt $MAX_RETRY ]; do
         log "Retry $RETRY: downloading jdk-8u92-linux-x64.rpm..."
-        wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/8u92-b14/jdk-8u92-linux-x64.rpm
+        wget https://s3.amazonaws.com/app-chemistry/files/jdk-8u92-linux-x64.rpm
         if [ $? -ne 0 ]; then
-            yum install wget https://s3.amazonaws.com/app-chemistry/files/jdk-8u92-linux-x64.rpm
             let RETRY=RETRY+1
         else
             break
