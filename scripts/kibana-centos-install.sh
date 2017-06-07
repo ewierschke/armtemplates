@@ -66,7 +66,7 @@ install_java() {
 install_kibana() {
     # create repository files
     # default - ES 2.3.1
-    KIBANA_VERSION='4.5'
+    KIBANA_VERSION='4.6.4'
     if [[ "${ES_VERSION}" == \2.\2* ]]; then
         KIBANA_VERSION='4.4'    
     fi 
