@@ -47,8 +47,8 @@ MAX_RETRY=5
 install_java() {
     RETRY=0
     while [ $RETRY -lt $MAX_RETRY ]; do
-        echo "Retry $RETRY: downloading jdk-8u92-linux-x64.rpm..."
-        wget https://s3.amazonaws.com/app-chemistry/files/jdk-8u92-linux-x64.rpm
+        echo "Retry $RETRY: downloading jdk-8u121-linux-x64.rpm..."
+        wget https://s3.amazonaws.com/app-chemistry/files/jdk-8u121-linux-x64.rpm
         if [ $? -ne 0 ]; then
             let RETRY=RETRY+1
         else
@@ -56,10 +56,10 @@ install_java() {
         fi
     done
     if [ $RETRY -eq $MAX_RETRY ]; then
-        echo "Failed to download jdk-8u92-linux-x64.rpm."
+        echo "Failed to download jdk-8u121-linux-x64.rpm."
         exit 1
     fi
-    yum -y localinstall jdk-8u92-linux-x64.rpm
+    yum -y localinstall jdk-8u121-linux-x64.rpm
 #    rm ~/jdk-8u*-linux-x64.rpm
 }
 
