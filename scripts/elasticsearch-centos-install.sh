@@ -549,3 +549,21 @@ exit 0
 # gateway.expected_nodes: 10
 # gateway.recover_after_time: 5m
 #----------------------
+
+chown elasticsearch:elasticsearch /etc/elasticsearch/elasticsearch.yml
+service firewalld start
+firewall-cmd --zone=public --permanent --add-port=9200/tcp
+firewall-cmd --zone=public --permanent --add-port=9300/tcp
+firewall-cmd --zone=public --permanent --add-port=9301/tcp
+firewall-cmd --zone=public --permanent --add-port=9302/tcp
+firewall-cmd --zone=public --permanent --add-port=9303/tcp
+firewall-cmd --zone=public --permanent --add-port=9304/tcp
+firewall-cmd --zone=public --permanent --add-port=9305/tcp
+firewall-cmd --zone=public --add-port=9200/tcp
+firewall-cmd --zone=public --add-port=9300/tcp
+firewall-cmd --zone=public --add-port=9301/tcp
+firewall-cmd --zone=public --add-port=9302/tcp
+firewall-cmd --zone=public --add-port=9303/tcp
+firewall-cmd --zone=public --add-port=9304/tcp
+firewall-cmd --zone=public --add-port=9305/tcp
+yum -y install epel-release && yum -y --enablerepo=epel install python-pip wget && pip install --upgrade pip setuptools watchmaker && watchmaker --log-level debug --log-dir=/var/log/watchmaker
