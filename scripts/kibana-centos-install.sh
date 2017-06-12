@@ -166,6 +166,12 @@ enabled=1" | tee /etc/yum.repos.d/kibana.repo
     systemctl start kibana
     systemctl enable kibana
        
+    # Watchmaker
+    service firewalld start
+    firewall-cmd --zone=public --add-port=5601/tcp
+    firewall-cmd --zone=public --permanent --add-port=5601/tcp
+    yum -y install epel-release && yum -y --enablerepo=epel install python-pip wget && pip install --upgrade pip setuptools watchmaker && watchmaker --log-level debug --log-dir=/var/log/watchmaker
+
     exit 0
 }
 
@@ -195,3 +201,4 @@ done
 
 install_java
 install_kibana
+
