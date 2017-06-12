@@ -151,11 +151,11 @@
     },
     {
       "type": "extensions",
-      "name": "runwatchmaker",
+      "name": "linwatch",
       "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName')))]"
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
       ],
       "properties": "[parameters('osSettings').extensionSettings.jumpbox]"
     }
