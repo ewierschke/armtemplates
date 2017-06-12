@@ -147,17 +147,19 @@
             }
           ]
         }
-      }
-    },
-    {
-      "type": "extensions",
-      "name": "linwatch",
-      "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
-      ],
-      "properties": "[parameters('osSettings').extensionSettings.jumpbox]"
+      },
+      "resources": [
+        {
+          "type": "extensions",
+          "name": "linwatch",
+          "apiVersion": "2015-06-15",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+          ],
+          "properties": "[parameters('osSettings').extensionSettings.jumpbox]"
+        }
+      ]
     }
   ],
   "outputs": {
