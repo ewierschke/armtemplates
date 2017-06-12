@@ -137,9 +137,6 @@ while getopts :n:d:v:a:k:cme:o:r:pwxyzsjh optname; do
     c) #use AFS for the data storage
       USE_AFS=1
       ;;
-    d) #place data on local resource disk
-      NON_DURABLE=1
-      ;;
     j) #install jmeter server agent
       JMETER_AGENT=1
       ;;
