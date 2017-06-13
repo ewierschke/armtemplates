@@ -438,7 +438,8 @@ echo "vm.max_map_count = 262144" >> /etc/sysctl.conf
 ES_HEAP=`free -m |grep Mem | awk '{if ($2/2 >31744)  print 31744;else print $2/2;}'`
 log "Configure elasticsearch heap size - $ES_HEAP"
 echo "ES_HEAP_SIZE=${ES_HEAP}m" >> /etc/default/elasticsearch
-sed -i_bak -e 's/#ES_HEAP_SIZE=.*/ES_HEAP_SIZE=${ES_HEAP}m/' /etc/sysconfig/elasticsearch
+echo ${ES_HEAP}
+sed -i_bak -e "s/#ES_HEAP_SIZE=.*/ES_HEAP_SIZE=${ES_HEAP}m/" /etc/sysconfig/elasticsearch
 
 #Optionally Install Marvel
 if [ ${INSTALL_MARVEL} -ne 0 ]; then
@@ -523,6 +524,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+# STIG prep and watchmaker execution
 chown root:elasticsearch /etc/elasticsearch/elasticsearch.yml
 service firewalld start
 firewall-cmd --zone=public --permanent --add-port=9200/tcp
