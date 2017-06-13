@@ -540,6 +540,9 @@ firewall-cmd --zone=public --add-port=9304/tcp
 firewall-cmd --zone=public --add-port=9305/tcp
 (
     printf "yum -y update\n"
+    printf "service elasticsearch stop\n"
+    printf "/usr/share/elasticsearch/bin/plugin remove analysis-phonetic\n"
+    printf "/usr/share/elasticsearch/bin/plugin install analysis-phonetic\n"
     printf "shutdown -r now\n"
 ) > /root/update.sh
 chmod 777 /root/update.sh
