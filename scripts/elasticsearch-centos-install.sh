@@ -507,6 +507,9 @@ if [ ${INSTALL_CLOUD_AZURE} -ne 0 ]; then
     fi
 fi
 
+# install analysis-phonetic plugin
+/usr/share/elasticsearch/bin/plugin install analysis-phonetic
+
 # start the service
 log "Starting Elasticsearch on ${HOSTNAME}"
 systemctl start elasticsearch
@@ -519,7 +522,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-chown elasticsearch:elasticsearch /etc/elasticsearch/elasticsearch.yml
+chown root:elasticsearch /etc/elasticsearch/elasticsearch.yml
 service firewalld start
 firewall-cmd --zone=public --permanent --add-port=9200/tcp
 firewall-cmd --zone=public --permanent --add-port=9300/tcp
@@ -535,8 +538,9 @@ firewall-cmd --zone=public --add-port=9302/tcp
 firewall-cmd --zone=public --add-port=9303/tcp
 firewall-cmd --zone=public --add-port=9304/tcp
 firewall-cmd --zone=public --add-port=9305/tcp
-yum -y install epel-release && yum -y --enablerepo=epel install python-pip wget && pip install --upgrade pip setuptools watchmaker && watchmaker --log-level debug --log-dir=/var/log/watchmaker
-
+yum -y install epel-release && yum -y --enablerepo=epel install python-pip wget && pip install --upgrade pip setuptools watchmaker && watchmaker -n --log-level debug --log-dir=/var/log/watchmaker
+yum -y update
+shutdown -r +2
 
 exit 0
 
