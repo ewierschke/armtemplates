@@ -170,9 +170,14 @@ enabled=1" | tee /etc/yum.repos.d/kibana.repo
     service firewalld start
     firewall-cmd --zone=public --add-port=5601/tcp
     firewall-cmd --zone=public --permanent --add-port=5601/tcp
+    (
+        printf "yum -y update\n"
+        printf "shutdown -r now\n"
+    ) > /root/update.sh
+    chmod 777 /root/update.sh
+    yum -y install at
     yum -y install epel-release && yum -y --enablerepo=epel install python-pip wget && pip install --upgrade pip setuptools watchmaker && watchmaker -n --log-level debug --log-dir=/var/log/watchmaker
-    yum -y update
-    shutdown -r +2
+    at now + 2 minutes -f /root/update.sh
 
     exit 0
 }
