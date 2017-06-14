@@ -14,10 +14,10 @@
         "description": "Authentication information"
       }
     },
-    "storageAccountName": {
-      "type": "string",
+    "storageSettings": {
+      "type": "object",
       "metadata": {
-        "description": "Unique namespace for the Storage Account where the Virtual Machine's disks will be placed"
+        "description": "Storage Account Settings"
       }
     },
     "subnet": {
@@ -26,7 +26,7 @@
         "description": "The VNET and Subnet to deploy the nodes in to"
       }
     },
-    "marvelNodesIpPrefix": {
+    "masterNodesIpPrefix": {
       "type": "string",
       "metadata": {
         "description": "IP Prefix used to append index for static addresses"
@@ -36,7 +36,7 @@
       "type": "string",
       "defaultValue": "Standard_A0",
       "metadata": {
-        "description": "Size of the Elasticsearch nodes"
+        "description": "Size of the Elasticsearch master nodes"
       }
     },
     "osSettings": {
@@ -54,6 +54,8 @@
   },
   "variables": {
     "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]",
+    "storageAccountName": "[parameters('storageSettings').shared]",
+    "storageAccountNameAFS": "[parameters('storageSettings').afs]",
     "vmName": "[concat(parameters('namespace'), '-vm')]",
     "nicName": "[concat(parameters('namespace'), '-nic')]"
   },
@@ -61,7 +63,7 @@
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/availabilitySets",
-      "name": "es-marvel-set",
+      "name": "es-master-set",
       "location": "[resourceGroup().location]",
       "properties": {
         "platformUpdateDomainCount": 3,
@@ -74,7 +76,7 @@
       "name": "[concat(variables('nicName'), copyindex())]",
       "location": "[resourceGroup().location]",
       "copy": {
-        "name": "marvelNodesNicLoop",
+        "name": "masterNodesNicLoop",
         "count": 3
       },
       "properties": {
@@ -83,7 +85,7 @@
             "name": "ipconfig1",
             "properties": {
               "privateIPAllocationMethod": "Static",
-              "privateIPAddress": "[concat(parameters('marvelNodesIpPrefix'), copyindex())]",
+              "privateIPAddress": "[concat(parameters('masterNodesIpPrefix'), copyindex())]",
               "subnet": {
                 "id": "[variables('subnetRef')]"
               }
@@ -98,22 +100,22 @@
       "name": "[concat(variables('vmName'), copyindex())]",
       "location": "[resourceGroup().location]",
       "copy": {
-        "name": "marvelVmLoop",
+        "name": "masterVmLoop",
         "count": 3
       },
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'), copyindex()))]",
-        "[resourceId('Microsoft.Compute/availabilitySets', 'es-marvel-set')]"
+        "[resourceId('Microsoft.Compute/availabilitySets', 'es-master-set')]"
       ],
       "properties": {
         "availabilitySet": {
-          "id": "[resourceId('Microsoft.Compute/availabilitySets', 'es-marvel-set')]"
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', 'es-master-set')]"
         },
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
-          "computerName": "[concat('marvel-vm', copyIndex())]",
+          "computerName": "[concat('master-vm', copyIndex())]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('authSet').password]",
           "linuxConfiguration": "[parameters('osSettings').linuxConfiguration]"
@@ -123,7 +125,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2016-01-01').primaryEndpoints.blob, 'vhds/', variables('vmName'), copyindex(), '-osdisk.vhd')]"
+              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2016-01-01').primaryEndpoints.blob, 'vhds/', variables('vmName'), copyindex(), '-osdisk.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -147,12 +149,12 @@
             "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'), copyindex()))]"
           ],
           "properties": {
-            "publisher": "[parameters('osSettings').extensionSettings.marvel.publisher]",
-            "type": "[parameters('osSettings').extensionSettings.marvel.type]",
-            "typeHandlerVersion": "[parameters('osSettings').extensionSettings.marvel.typeHandlerVersion]",
+            "publisher": "[parameters('osSettings').extensionSettings.master.publisher]",
+            "type": "[parameters('osSettings').extensionSettings.master.type]",
+            "typeHandlerVersion": "[parameters('osSettings').extensionSettings.master.typeHandlerVersion]",
             "settings": {
-              "fileUris": "[parameters('osSettings').extensionSettings.marvel.settings.fileUris]",
-              "commandToExecute": "[concat(parameters('osSettings').extensionSettings.marvel.settings.commandToExecute, listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2016-01-01').keys[0].value)]"
+              "fileUris": "[parameters('osSettings').extensionSettings.master.settings.fileUris]",
+              "commandToExecute": "[concat(parameters('osSettings').extensionSettings.master.settings.commandToExecute, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameAFS')), '2016-01-01').keys[0].value)]"
             }
           }
         }
