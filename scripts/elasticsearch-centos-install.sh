@@ -444,6 +444,11 @@ echo "ES_HEAP_SIZE=${ES_HEAP}m" >> /etc/default/elasticsearch
 echo ${ES_HEAP}
 sed -i_bak -e "s/#ES_HEAP_SIZE=.*/ES_HEAP_SIZE=${ES_HEAP}m/" /etc/sysconfig/elasticsearch
 
+# Configure Memory Locking
+echo "bootstrap.mlockall: true" >> /etc/elasticsearch/elasticsearch.yml
+echo "MAX_LOCKED_MEMORY=unlimited" >> /etc/default/elasticsearch
+sed -i_bak -e "s/#LimitMEMLOCK=.*/LimitMEMLOCK=infinity/" /usr/lib/systemd/system/elasticsearch.service
+
 #Optionally Install Marvel
 if [ ${INSTALL_MARVEL} -ne 0 ]; then
     log "Installing Marvel Plugin"
