@@ -447,7 +447,6 @@ sed -i_bak -e "s/#ES_HEAP_SIZE=.*/ES_HEAP_SIZE=${ES_HEAP}m/" /etc/sysconfig/elas
 # Configure Memory Locking
 echo "bootstrap.mlockall: true" >> /etc/elasticsearch/elasticsearch.yml
 echo "MAX_LOCKED_MEMORY=unlimited" >> /etc/default/elasticsearch
-sed -i_bak -e "s/#LimitMEMLOCK=.*/LimitMEMLOCK=infinity/" /usr/lib/systemd/system/elasticsearch.service
 
 #Optionally Install Marvel
 if [ ${INSTALL_MARVEL} -ne 0 ]; then
@@ -531,6 +530,9 @@ if [ $? -ne 0 ]; then
     log "elasticsearch service is in unhealthy state, exit"
     exit 1
 fi
+
+# Additional memlock config
+sed -i_bak -e "s/#LimitMEMLOCK=.*/LimitMEMLOCK=infinity/" /usr/lib/systemd/system/elasticsearch.service
 
 # STIG prep and watchmaker execution
 chown root:elasticsearch /etc/elasticsearch/elasticsearch.yml
