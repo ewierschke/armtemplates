@@ -532,7 +532,11 @@ if [ $? -ne 0 ]; then
 fi
 
 # Additional memlock config
-sed -i_bak -e "s/#LimitMEMLOCK=.*/LimitMEMLOCK=infinity/" /usr/lib/systemd/system/elasticsearch.service
+mkdir /etc/systemd/system/elasticsearch.service.d/
+echo "[Service]" >> /etc/systemd/system/elasticsearch.service.d/elasticsearch.conf
+echo "LimitMEMLOCK=infinity" >> /etc/systemd/system/elasticsearch.service.d/elasticsearch.conf
+
+#sed -i_bak -e "s/#LimitMEMLOCK=.*/LimitMEMLOCK=infinity/" /usr/lib/systemd/system/elasticsearch.service
 
 # STIG prep and watchmaker execution
 chown root:elasticsearch /etc/elasticsearch/elasticsearch.yml
