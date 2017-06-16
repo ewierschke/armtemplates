@@ -118,7 +118,7 @@
       "name": "[concat(variables('nicName'), copyindex())]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpName'), copyindex())]",
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('securityGroupName'))]"
       ],
       "copy": {
@@ -139,7 +139,7 @@
               },
               "networkSecurityGroup": {
                 "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('securityGroupName'))]"
-              }
+              },
               "loadBalancerBackendAddressPools": "[parameters('lbBackendPools').backendPools]"
             }
           }
