@@ -118,7 +118,7 @@
       "name": "[concat(variables('nicName'), copyindex())]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpName'), copyindex())]",
+        "['clientpipLoop']",
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('securityGroupName'))]"
       ],
       "copy": {
