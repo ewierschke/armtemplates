@@ -538,6 +538,10 @@ echo "LimitMEMLOCK=infinity" >> /etc/systemd/system/elasticsearch.service.d/elas
 
 #sed -i_bak -e "s/#LimitMEMLOCK=.*/LimitMEMLOCK=infinity/" /usr/lib/systemd/system/elasticsearch.service
 
+# Get name_synonyms
+wget https://raw.githubusercontent.com/ewierschke/armtemplates/runwincustdata/scripts/name_synonyms.txt
+mv name_synonyms.txt /etc/elasticsearch/name_synonyms.txt
+
 # STIG prep and watchmaker execution
 chown root:elasticsearch /etc/elasticsearch/elasticsearch.yml
 service firewalld start
