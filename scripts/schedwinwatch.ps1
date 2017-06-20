@@ -112,7 +112,9 @@ try {
 log -LogTag ${ScriptName} "Downloading ${nextscript}.ps1"
 Invoke-Webrequest "https://raw.githubusercontent.com/ewierschke/armtemplates/runwincustdata/scripts/${nextscript}.ps1" -Outfile "${schedwinwatchDir}\${nextscript}.ps1";
 
-
+# Remove previous scheduled task
+log -LogTag ${ScriptName} "UnRegistering previous scheduled task"
+Unregister-ScheduledTask -TaskName "RunNextScript" -Confirm:$false;
 
 #Create an atlogon scheduled task to run next script
 log -LogTag ${ScriptName} "Registering a scheduled task at startup to run the next script"
