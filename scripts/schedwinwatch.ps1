@@ -110,7 +110,29 @@ try {
 
 # Get the next script
 log -LogTag ${ScriptName} "Downloading ${nextscript}.ps1"
-Invoke-Webrequest "https://raw.githubusercontent.com/ewierschke/armtemplates/runwincustdata/scripts/${nextscript}.ps1" -Outfile "${schedwinwatchDir}\${nextscript}.ps1";
+$Stoploop = $false
+[int]$Retrycount = "0"
+
+do {
+    try {
+       Invoke-Webrequest "https://raw.githubusercontent.com/ewierschke/armtemplates/runwincustdata/scripts/${nextscript}.ps1" -Outfile "${schedwinwatchDir}\${nextscript}.ps1";
+       $Stoploop = $true
+       }
+    catch {
+        if ($Retrycount -gt 5){
+           "$(get-date -format "yyyyMMdd.HHmm.ss"): ${ScriptName}: ERROR: Encountered a problem creating the event log source." | Out-Default
+           Stop-Transcript
+           $Stoploop = $true
+           throw
+        }
+		else {
+		    Start-Sleep -Seconds 30
+		    $Retrycount = $Retrycount + 1
+		}
+	}
+}
+While ($Stoploop -eq $false)
+
 
 # Remove previous scheduled task
 log -LogTag ${ScriptName} "UnRegistering previous scheduled task"
