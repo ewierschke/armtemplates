@@ -126,7 +126,8 @@ do {
            throw
         }
 		else {
-		    Start-Sleep -Seconds 30
+		    log -LogTag ${ScriptName} "Script download Attempt ${Retrycount}"
+			Start-Sleep -Seconds 30
 		    $Retrycount = $Retrycount + 1
 		}
 	}
@@ -159,13 +160,20 @@ $UsernameFilePath = "${credspath}\lcladminname.txt";
 $Username = Get-Content $UsernameFilePath;
 $LclAdminCredsFilePath = "${credspath}\lcladminpass.txt";
 $LclAdminKeyFilePath = "${credspath}\lcladminkey.txt";
-$LclAdminKey = Get-Content $LclAdminKeyFilePath;
-$LclAdminPass = Get-Content $LclAdminCredsFilePath;
-$SecPassword = $LclAdminPass | ConvertTo-SecureString -Key $LclAdminKey;
-$BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecPassword);
-$adminpass = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR);
-Set-ScheduledTask -User "$Domain\$Username" -Password $adminpass -TaskName $taskname;
-#todo-add test for failure... if failure disable task, only remote-items if success
+$LclAdminKey = Get-Content ${LclAdminKeyFilePath};
+$LclAdminPass = Get-Content ${LclAdminCredsFilePath};
+$SecPassword = $LclAdminPass | ConvertTo-SecureString -Key ${LclAdminKey};
+$BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR(${SecPassword});
+$adminpass = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto(${BSTR});
+#only continue if task scheduled as user
+try {
+    Set-ScheduledTask -User "${Domain}\${Username}" -Password ${adminpass} -TaskName ${taskname};
+}
+catch {
+    "$(get-date -format "yyyyMMdd.HHmm.ss"): ${ScriptName}: ERROR: Encountered a problem creating the event log source." | Out-Default
+    Stop-Transcript
+    throw
+}
 log -LogTag ${ScriptName} "deleting creds"
 Remove-Item "${credspath}\lcladminpass.txt" -Force -Recurse;
 Remove-Item "${credspath}\lcladminkey.txt" -Force -Recurse;
