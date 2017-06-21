@@ -1,7 +1,7 @@
 # Remove previous scheduled task
 Unregister-ScheduledTask -TaskName "RunNextScript" -Confirm:$false;
 #Download jq to initialize cert
-Import-Module BitsTransfer
+Import-Module BitsTransfer;
 Start-BitsTransfer -Source "https://s3.amazonaws.com/app-chemistry/files/jq-win64.exe" -Destination "${Env:Temp}\jq-win64.exe";
 
 $BootstrapUrl = "https://raw.githubusercontent.com/plus3it/watchmaker/master/docs/files/bootstrap/watchmaker-bootstrap.ps1"
