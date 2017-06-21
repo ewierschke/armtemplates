@@ -175,10 +175,10 @@ catch {
     throw
 }
 log -LogTag ${ScriptName} "deleting creds"
-Remove-Item "${credspath}\lcladminpass.txt" -Force -Recurse;
-Remove-Item "${credspath}\lcladminkey.txt" -Force -Recurse;
-Remove-Item "${credspath}\lcladminname.txt" -Force -Recurse;
-Remove-Item "${credspath}\domainname.txt" -Force -Recurse;
+#Remove-Item "${credspath}\lcladminpass.txt" -Force -Recurse;
+#Remove-Item "${credspath}\lcladminkey.txt" -Force -Recurse;
+#Remove-Item "${credspath}\lcladminname.txt" -Force -Recurse;
+#Remove-Item "${credspath}\domainname.txt" -Force -Recurse;
 
 log -LogTag ${ScriptName} "Rebooting"
 powershell.exe "Restart-Computer -Force -Verbose";
