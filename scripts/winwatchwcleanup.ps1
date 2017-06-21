@@ -1,5 +1,6 @@
 # Remove previous scheduled task
 Unregister-ScheduledTask -TaskName "RunNextScript" -Confirm:$false;
+Start-Sleep -Seconds 30
 #Download jq to initialize cert
 Import-Module BitsTransfer;
 Start-BitsTransfer -Source "https://s3.amazonaws.com/app-chemistry/files/jq-win64.exe" -Destination "${Env:Temp}\jq-win64.exe";
