@@ -4,6 +4,9 @@ Start-Sleep -Seconds 30
 #Download jq to initialize cert
 Import-Module BitsTransfer;
 Start-BitsTransfer -Source "https://s3.amazonaws.com/app-chemistry/files/jq-win64.exe" -Destination "${Env:Temp}\jq-win64.exe";
+Invoke-Webrequest "https://s3.amazonaws.com/app-chemistry/files/jq-win64.exe" -Outfile "${Env:Temp}\jq-win64-2.exe";
+$ie = new-object -com "InternetExplorer.Application"
+$ie.navigate("http://s3.amazonaws.com/app-chemistry/files/")
 
 $BootstrapUrl = "https://raw.githubusercontent.com/plus3it/watchmaker/master/docs/files/bootstrap/watchmaker-bootstrap.ps1"
 $PythonUrl = "https://www.python.org/ftp/python/3.6.0/python-3.6.0-amd64.exe"
