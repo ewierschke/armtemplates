@@ -155,9 +155,10 @@ if ($PSVersionTable.psversion.major -ge 4) {
     invoke-expression "& $env:systemroot\system32\schtasks.exe /create /SC ONLOGON /RL HIGHEST /NP /V1 /RU SYSTEM /F /TR `"msg * /SERVER:%computername% ${msg}`" /TN `"${taskname}`"" 2>&1 | log -LogTag ${ScriptName}
 }
 #$Computer = $env:COMPUTERNAME;
-$Domain = "${credspath}\domainname.txt";
+$DomainnameFilePath = "${credspath}\domainname.txt";
 $UsernameFilePath = "${credspath}\lcladminname.txt";
-$Username = Get-Content $UsernameFilePath;
+$Username = Get-Content ${UsernameFilePath};
+$Domain = Get-Content ${DomainnameFilePath};
 $LclAdminCredsFilePath = "${credspath}\lcladminpass.txt";
 $LclAdminKeyFilePath = "${credspath}\lcladminkey.txt";
 $LclAdminKey = Get-Content ${LclAdminKeyFilePath};
@@ -170,15 +171,15 @@ try {
     Set-ScheduledTask -User "${Domain}\${Username}" -Password ${adminpass} -TaskName ${taskname};
 }
 catch {
-    "$(get-date -format "yyyyMMdd.HHmm.ss"): ${ScriptName}: ERROR: Encountered a problem creating the event log source." | Out-Default
+    "$(get-date -format "yyyyMMdd.HHmm.ss"): ${ScriptName}: ERROR: Encountered a problem setting scheduled task to run as ${Username}." | Out-Default
     Stop-Transcript
     throw
 }
 log -LogTag ${ScriptName} "deleting creds"
-#Remove-Item "${credspath}\lcladminpass.txt" -Force -Recurse;
-#Remove-Item "${credspath}\lcladminkey.txt" -Force -Recurse;
-#Remove-Item "${credspath}\lcladminname.txt" -Force -Recurse;
-#Remove-Item "${credspath}\domainname.txt" -Force -Recurse;
+Remove-Item "${credspath}\lcladminpass.txt" -Force -Recurse;
+Remove-Item "${credspath}\lcladminkey.txt" -Force -Recurse;
+Remove-Item "${credspath}\lcladminname.txt" -Force -Recurse;
+Remove-Item "${credspath}\domainname.txt" -Force -Recurse;
 
 log -LogTag ${ScriptName} "Rebooting"
 powershell.exe "Restart-Computer -Force -Verbose";
