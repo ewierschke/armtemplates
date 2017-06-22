@@ -166,7 +166,7 @@ $msg = "Please upgrade Powershell and try again."
 
 $taskname = "RunNextScript"
 if ($PSVersionTable.psversion.major -ge 4) {
-    $A = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-command "& '${schedcreatedcDir}\${nextscript}.ps1' '${Username}' '${adminpass}' '${ADRestoreModeadminpass}' '${Domain}' 'Replica DC'""
+    $A = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-command & '${schedcreatedcDir}\${nextscript}.ps1' '${Username}' '${adminpass}' '${ADRestoreModeadminpass}' '${Domain}' 'Replica DC'"
     $T = New-ScheduledTaskTrigger -AtStartup
     $P = New-ScheduledTaskPrincipal -UserId "NT AUTHORITY\SYSTEM" -RunLevel "Highest" -LogonType "ServiceAccount"
     $S = New-ScheduledTaskSettingsSet
