@@ -1,3 +1,9 @@
+#Get Parameters
+param (
+    [Parameter(Mandatory=$False,ValueFromPipelineByPropertyName=$true)]
+    [String]$WatchmakerParam
+)
+
 # Remove previous scheduled task
 Unregister-ScheduledTask -TaskName "RunNextScript" -Confirm:$false;
 #open IE to initialize cert
@@ -22,4 +28,4 @@ $BootstrapFile = "${Env:Temp}\$(${BootstrapUrl}.split('/')[-1])"
 pip install --index-url="$PypiUrl" --trusted-host="$PypiHost" --upgrade pip setuptools watchmaker
 
 # Run watchmaker
-watchmaker --log-level debug --log-dir=C:\Watchmaker\Logs
+watchmaker --log-level debug --log-dir=C:\Watchmaker\Logs ${WatchmakerParam}
