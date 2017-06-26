@@ -145,7 +145,7 @@ $msg = "Please upgrade Powershell and try again."
 
 $taskname = "RunNextScript"
 if ($PSVersionTable.psversion.major -ge 4) {
-    $A = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-command & '${schedwinwatchDir}\${nextscript}.ps1' '--ash-role DomainController'"
+    $A = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-command & '${schedwinwatchDir}\${nextscript}.ps1' '--ash-role' 'DomainController'"
     $T = New-ScheduledTaskTrigger -AtStartup
     $P = New-ScheduledTaskPrincipal -UserId "NT AUTHORITY\SYSTEM" -RunLevel "Highest" -LogonType "ServiceAccount"
     $S = New-ScheduledTaskSettingsSet

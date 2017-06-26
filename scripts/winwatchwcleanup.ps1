@@ -1,7 +1,10 @@
 #Get Parameters
 param (
     [Parameter(Mandatory=$False,ValueFromPipelineByPropertyName=$true)]
-    [String]$WatchmakerParam
+    [String]$WatchmakerParam,
+
+    [Parameter(Mandatory=$False,ValueFromPipelineByPropertyName=$true)]
+    [String]$WatchmakerParam2
 )
 
 # Remove previous scheduled task
@@ -28,4 +31,4 @@ $BootstrapFile = "${Env:Temp}\$(${BootstrapUrl}.split('/')[-1])"
 pip install --index-url="$PypiUrl" --trusted-host="$PypiHost" --upgrade pip setuptools watchmaker
 
 # Run watchmaker
-watchmaker --log-level debug --log-dir=C:\Watchmaker\Logs ${WatchmakerParam}
+watchmaker --log-level debug --log-dir=C:\Watchmaker\Logs ${WatchmakerParam} ${WatchmakerParam2}
