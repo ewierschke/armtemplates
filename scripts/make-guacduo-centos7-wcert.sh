@@ -449,7 +449,7 @@ log "Writing /etc/guacamole/guacamole.properties"
     echo "# Hostname and port of guacamole proxy"
     echo "guacd-hostname:      localhost"
     echo "guacd-port:          4822"
-    echo "api-session-timeout: 10"
+    echo "api-session-timeout: 15"
 ) > /etc/guacamole/guacamole.properties
 chmod 644 /etc/guacamole/guacamole.properties
 log "Writing /etc/guacamole/logback.xml"
