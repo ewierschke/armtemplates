@@ -558,7 +558,7 @@ log "Writing /etc/guacamole/logback.xml"
     printf "\t<appender name=\"GUAC-DEBUG\" class=\"ch.qos.logback.core.FileAppender\">\n"
     printf "\t\t<file>/var/log/tomcat/guacamole.log</file>\n"
     printf "\t\t<encoder>\n"
-    printf "\t\t\t<pattern>%%d{HH:mm:ss.SSS} [%%thread] %%-5level %%logger{36} - %%msg%%n</pattern>\n"
+    printf "\t\t\t<pattern>%%d{yyyy-MM-dd HH:mm:ss} [%%thread] %%-5level %%logger{36} - %%msg%%n</pattern>\n"
     printf "\t\t</encoder>\n"
     printf "\t</appender>\n"
     printf "\n"
@@ -889,6 +889,16 @@ log "Writing new /etc/httpd/conf.d/ssl.conf"
     printf "</VirtualHost>\n"
 ) > /etc/httpd/conf.d/ssl.conf
 chmod 644 /etc/httpd/conf.d/ssl.conf
+
+
+#ensure varVol is large enough for extensions
+varsize=$(lvdisplay | awk '/varVol/{found=1}; /LV Size/ && found{print $3; exit}')
+thisvarsize=${varsize%%.*}
+if [ "$thisvarsize" -le 1 ]
+    then lvextend -L+2G /dev/VolGroup00/varVol
+    resize2fs /dev/VolGroup00/varVol
+fi
+
 
 # Start services
 log "Attempting to start services"
