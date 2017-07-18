@@ -192,7 +192,7 @@ write_brand()
         printf "}\n"
     ) > /etc/guacamole/extensions/translations/en.json
     cd "/etc/guacamole/extensions"
-    zip -u "custom.jar" translations/en.json
+    zip -u "custom.jar" "/etc/guacamole/extensions/translations/en.json"
     log "Successfully added branding text to Guacamole login page"
 }  # ----------  end of function write_brand  ----------
 
@@ -812,7 +812,7 @@ if [[ -n "${BRANDTEXT}" ]]
 then
     log "Writing Guac translations extension file to add in custom branding text"
     mkdir -p /etc/guacamole/extensions/translations
-    mkdir -p /usr/share/tomcat/.guacamole/extensions/translations
+    #mkdir -p /usr/share/tomcat/.guacamole/extensions/translations
     if [ ! -f "/etc/guacamole/extensions/guac-manifest.json" ]
     then
         write_manifest
