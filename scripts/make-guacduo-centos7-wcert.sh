@@ -186,7 +186,6 @@ write_brand()
 {
     log "Writing Guac translations extension file to add in custom branding text"
     mkdir -p /etc/guacamole/extensions/translations
-    mkdir -p /usr/share/tomcat/.guacamole/extensions/translations
     (
         printf "{\n"
         printf "\"APP\" : { \"NAME\" : \"${BRANDTEXT}\" }\n"
