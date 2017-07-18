@@ -817,7 +817,6 @@ fi
 #Add custom branding text to title page.
 if [[ -n "${BRANDTEXT}" ]]
 then
-    log "Writing Guac translations extension file to add in custom branding text"
     mkdir -p /etc/guacamole/extensions/translations
     #mkdir -p /usr/share/tomcat/.guacamole/extensions/translations
     if [ ! -f "/etc/guacamole/extensions/guac-manifest.json" ]
