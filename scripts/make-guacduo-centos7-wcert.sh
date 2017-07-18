@@ -135,6 +135,90 @@ EOT
 }  # ----------  end of function usage  ----------
 
 
+#Guac manifest file for using extensions
+write_manifest()
+{
+    log "Writing Guac manifest file"
+    (
+        printf "{\n"
+        printf "\"guacamoleVersion\" : \"$GUAC_VERSION\",\n"
+        printf "\"name\" : \"Custom Extension\",\n"
+        printf "\"namespace\" : \"custom-extension\",\n"
+        printf "\"html\" : [ \"custom-urls.html\" ],\n"
+        printf "\"translations\" : [ \"translations/en.json\" ]\n"
+        printf "}\n"
+    ) > /etc/guacamole/extensions/guac-manifest.json
+    if ! ( [[ -n "${URL_1}" ]] || [[ -n "${URL_2}" ]] )
+    then
+        sed -i '/html/d' /etc/guacamole/extensions/guac-manifest.json
+    fi
+    cd "/etc/guacamole/extensions"
+    zip -u "custom.jar" "guac-manifest.json"
+}  # ----------  end of function write_manifest  ----------
+
+
+#Guac links extension file
+write_links()
+{
+    log "Writing Guac html extension file to add in custom URLs"
+    (
+        printf "<meta name=\"after\" content=\".login-ui .login-dialog\">\n"
+        printf "\n"
+        printf "<div class=\"welcome\">\n"
+        printf "<p>\n"
+        printf "<a target=\"_blank\" href=\"${URL_1}\">${URLTEXT_1}</a>\n"
+        printf "</p>\n"
+        printf "<p>\n"
+        printf "<a target=\"_blank\" href=\"${URL_2}\">${URLTEXT_2}</a>\n"
+        printf "</p>\n"
+        printf "</div>\n"
+    ) > /etc/guacamole/extensions/custom-urls.html
+    cd "/etc/guacamole/extensions"
+    zip -u "custom.jar" "custom-urls.html"
+    log "Successfully added URL(s) to Guacamole login page"
+}  # ----------  end of function write_links  ----------
+
+
+#Guac branding extension file
+write_brand()
+{
+    log "Writing Guac translations extension file to add in custom branding text"
+    mkdir -p /etc/guacamole/extensions/translations
+    (
+        printf "{\n"
+        printf "\"APP\" : { \"NAME\" : \"${BRANDTEXT}\" }\n"
+        printf "}\n"
+    ) > /etc/guacamole/extensions/translations/en.json
+    cd "/etc/guacamole/extensions"
+    zip -u "custom.jar" translations/en.json
+    log "Successfully added branding text to Guacamole login page"
+}  # ----------  end of function write_brand  ----------
+
+
+#Guac legal notice html extension file
+write_legal()
+{
+    log "Writing Guac legal notice html extension file to add in custom URLs"
+    cp /etc/issue /etc/guacamole/extensions/issue
+    sed -i 's/\r//g' /etc/guacamole/extensions/issue
+    sed -i ':a;N;$!ba;s/\n//g' /etc/guacamole/extensions/issue
+    sed -i 's|\. |\.<br /><br />|g' /etc/guacamole/extensions/issue && sed -i 's|\.<br /><br />|\. |1' /etc/guacamole/extensions/issue
+    ISSUE=$(cat /etc/guacamole/extensions/issue)
+    (
+        printf "<meta name=\"after\" content=\".login-ui .login-dialog\">\n"
+        printf "\n"
+        printf "<div style=\"width:6in; margin:0 auto; class=\"welcome\">\n"
+        printf "<p>\n"
+        printf "${ISSUE}\n"
+        printf "</p>\n"
+        printf "</div>\n"
+    ) > /etc/guacamole/extensions/custom-urls.html
+    cd "/etc/guacamole/extensions"
+    zip -u "custom.jar" "custom-urls.html"
+    log "Successfully added legal notice to Guacamole login page"
+}  # ----------  end of function write_legal  ----------
+
+
 # Define default values
 LDAP_HOSTNAME=
 LDAP_DOMAIN_DN=
@@ -695,23 +779,48 @@ then
     mkdir /var/tmp/guacamole
 fi
 
+
+#Add custom URLs to Guacamole login page using Guac extensions.
+if ( [[ -n "${URL_1}" ]] || [[ -n "${URL_2}" ]] )
+then
+    write_manifest
+    write_links
+else
+    log "URL parameters were blank, not adding links"
+fi
+
+
+#Add legal banner to Guacamole login page using Guac extensions.
+if ( [[ -z "${URL_1}" ]] || [[ -z "${URL_2}" ]] )
+then
+    write_manifest
+    write_legal
+else
+    log "URL parameters were not blank, not adding legal"
+fi
+
+
+#Add custom branding text to title page.
+if [[ -n "${BRANDTEXT}" ]]
+then
+    log "Writing Guac translations extension file to add in custom branding text"
+    mkdir -p /etc/guacamole/extensions/translations
+    if [ ! -f "/etc/guacamole/extensions/guac-manifest.json" ]
+    then
+        write_manifest
+    fi
+    write_brand
+else
+   log "Branding text was blank, keeping default text"
+fi
+
+
 #Adjust firewalld
 firewall-cmd --zone=public --add-service=https
 firewall-cmd --zone=public --permanent --add-service=https
 #firewall-cmd --zone=public --add-port=8080/tcp
 #firewall-cmd --zone=public --permanent --add-port=8080/tcp
 
-
-# Recreate iptables INPUT chain and add tomcat and apache port
-#iptables -F INPUT
-#iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
-#iptables -A INPUT -p icmp -j ACCEPT
-#iptables -A INPUT -i lo -j ACCEPT
-#iptables -A INPUT -m state --state NEW -m tcp -p tcp --dport 22 -j ACCEPT
-#iptables -A INPUT -m state --state NEW -m tcp -p tcp --dport 443 -j ACCEPT -m comment --comment "Apache Secure Server port"
-#iptables -A INPUT -m state --state NEW -m tcp -p tcp --dport 8080 -j ACCEPT -m comment --comment "Tomcat Server port"
-#iptables -A INPUT -j REJECT --reject-with icmp-host-prohibited
-#service iptables save
 
 #Build self signed cert install apache
 log "Creating dummy self-signed cert"
@@ -784,25 +893,3 @@ do
     chkconfig ${SVC} on
 done
 
-
-#Add custom URLs to Guacamole login page, change is not stateful due to sed pattern to be matched/replaced
-if ( [[ -n "${URL_1}" ]] || [[ -n "${URL_2}" ]] )
-then
-    log "Attempting to add HTML links from parameter input to Guacamole login page"
-    sleep 15
-    oldhtmltext='            <\/form>\\n\\n'
-    newhtmltext='            <div class="login">\\n                  <p style="text-align:center"><a target="_blank" href="'$URL_1'">'$URLTEXT_1'</a></p>\\n            <p style="text-align:center"><a target="_blank" href="'$URL_2'">'$URLTEXT_2'</a></p></div>\\n\\n            </form>\\n\\n'
-    sed -i "s|$oldhtmltext|$newhtmltext|" /usr/share/tomcat/webapps/ROOT/guacamole.min.js
-        if [[ $? -ne 0 ]]
-        then
-            log "sed statement failed to set Guacamole login page links: ${URLTEXT_1}, ${URLTEXT_2}"
-        fi
-    service tomcat restart
-        if [[ $? -ne 0 ]]
-        then
-            log "Final Tomcat restart unsuccessful"
-        fi
-    log "Successfully added URL(s) to Guacamole login page"
-else
-    log "URL parameters were blank, not changing Guacamole login page"
-fi
