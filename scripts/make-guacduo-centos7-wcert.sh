@@ -131,6 +131,7 @@ usage()
       key will be generated for you.
   -c  URL from which to download untrusted LDAP server public certificate
       to be added to tomcat cacerts store for LDAPS connection.
+  -B  Text for branding of the homepage. Default is "Apache Guacamole".
 EOT
 }  # ----------  end of function usage  ----------
 
@@ -241,10 +242,11 @@ DUO_INTKEY=
 DUO_SECRET=
 DUO_APPKEY=
 LDAP_CERT=
+BRANDTEXT=
 
 
 # Parse command-line parameters
-while getopts :hH:D:U:R:A:C:P:v:G:g:S:s:L:T:l:t:d:I:i:K:c: opt
+while getopts :hH:D:U:R:A:C:P:v:G:g:S:s:L:T:l:t:d:I:i:K:c:B: opt
 do
     case "${opt}" in
         h)
@@ -313,6 +315,9 @@ do
             ;;
         c)
             LDAP_CERT="${OPTARG}"
+            ;;
+        B)
+            BRANDTEXT="${OPTARG}"
             ;;
         \?)
             usage
