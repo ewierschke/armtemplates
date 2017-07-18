@@ -202,8 +202,9 @@ write_legal()
 {
     log "Writing Guac legal notice html extension file to add in custom URLs"
     readarray issuecontent < /etc/issue
-    slash="\S"
-    if [[ $slash = $issuecontent ]] 
+    kernel="Kernel"
+    word=$(echo ${issuecontent[1]} | awk '{print $1}')
+    if [[ "${kernel}" == "${word}" ]] 
     then 
         echo -n "" > /etc/guacamole/extensions/issue
     else
