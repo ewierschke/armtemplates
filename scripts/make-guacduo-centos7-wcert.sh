@@ -224,7 +224,6 @@ write_legal()
     ) > /etc/guacamole/extensions/custom-urls.html
     cd "/etc/guacamole/extensions"
     zip -u "custom.jar" "custom-urls.html"
-    cp /etc/guacamole/extensions/custom.jar /usr/share/tomcat/.guacamole/extensions/
     log "Successfully added legal notice to Guacamole login page"
 }  # ----------  end of function write_legal  ----------
 
@@ -759,13 +758,6 @@ chmod 744 /etc/profile.d/guacamole.sh
 log "Setting SEL contexts on shell-init files"
 chcon system_u:object_r:bin_t:s0 /etc/profile.d/guacamole.*
 
-#environment variable not working, creating symlink and copying extensions
-mkdir -p /usr/share/tomcat/.guacamole/{extensions,lib}
-ln -s /etc/guacamole/guacamole.properties /usr/share/tomcat/.guacamole/
-ln -s /etc/guacamole/logback.xml /usr/share/tomcat/.guacamole/
-cp /etc/guacamole/extensions/guacamole-auth-* /usr/share/tomcat/.guacamole/extensions/
-
-
 log "Ensuring freerdp plugins are linked properly"
 if [[ ! -d /usr/lib64/freerdp ]]
 then
@@ -827,6 +819,14 @@ then
 else
    log "Branding text was blank, keeping default text"
 fi
+
+
+#environment variable not working, creating symlink and copying extensions
+mkdir -p /usr/share/tomcat/.guacamole/{extensions,lib}
+ln -s /etc/guacamole/guacamole.properties /usr/share/tomcat/.guacamole/
+ln -s /etc/guacamole/logback.xml /usr/share/tomcat/.guacamole/
+cp /etc/guacamole/extensions/guacamole-auth-* /usr/share/tomcat/.guacamole/extensions/
+cp /etc/guacamole/extensions/custom.jar /usr/share/tomcat/.guacamole/extensions/
 
 
 #Adjust firewalld
