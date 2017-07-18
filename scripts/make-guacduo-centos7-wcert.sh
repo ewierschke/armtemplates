@@ -149,10 +149,10 @@ write_manifest()
         printf "\"translations\" : [ \"translations/en.json\" ]\n"
         printf "}\n"
     ) > /etc/guacamole/extensions/guac-manifest.json
-    if ! ( [[ -n "${URL_1}" ]] || [[ -n "${URL_2}" ]] )
-    then
-        sed -i '/html/d' /etc/guacamole/extensions/guac-manifest.json
-    fi
+    #if ! ( [[ -n "${URL_1}" ]] || [[ -n "${URL_2}" ]] )
+    #then
+    #    sed -i '/html/d' /etc/guacamole/extensions/guac-manifest.json
+    #fi
     cd "/etc/guacamole/extensions"
     zip -u "custom.jar" "guac-manifest.json"
 }  # ----------  end of function write_manifest  ----------
@@ -176,6 +176,7 @@ write_links()
     ) > /etc/guacamole/extensions/custom-urls.html
     cd "/etc/guacamole/extensions"
     zip -u "custom.jar" "custom-urls.html"
+    cp /etc/guacamole/extensions/custom.jar /usr/share/tomcat/.guacamole/extensions/
     log "Successfully added URL(s) to Guacamole login page"
 }  # ----------  end of function write_links  ----------
 
@@ -216,6 +217,7 @@ write_legal()
     ) > /etc/guacamole/extensions/custom-urls.html
     cd "/etc/guacamole/extensions"
     zip -u "custom.jar" "custom-urls.html"
+    cp /etc/guacamole/extensions/custom.jar /usr/share/tomcat/.guacamole/extensions/
     log "Successfully added legal notice to Guacamole login page"
 }  # ----------  end of function write_legal  ----------
 
@@ -810,6 +812,7 @@ if [[ -n "${BRANDTEXT}" ]]
 then
     log "Writing Guac translations extension file to add in custom branding text"
     mkdir -p /etc/guacamole/extensions/translations
+    mkdir -p /usr/share/tomcat/.guacamole/extensions/translations
     if [ ! -f "/etc/guacamole/extensions/guac-manifest.json" ]
     then
         write_manifest
