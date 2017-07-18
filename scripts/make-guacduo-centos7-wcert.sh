@@ -420,7 +420,7 @@ MODUSER="/usr/sbin/usermod"
 log "Installing EPEL repo"
 retry 2 yum -y install epel-release
 
-retry 5 yum -y install yum-utils yum-plugin-fastestmirror wget ntp
+retry 5 yum -y install yum-utils yum-plugin-fastestmirror wget ntp zip
 
 #log "Ensuring the CentOS Base repo is available"
 #retry 5 curl -s --show-error --retry 5 -L "https://raw.githubusercontent.com/plus3it/cfn/master/scripts/CentOS-Base.repo" \
@@ -830,6 +830,7 @@ firewall-cmd --zone=public --permanent --add-service=https
 #Build self signed cert install apache
 log "Creating dummy self-signed cert"
 yum -y install mod_ssl openssl httpd
+cd /root/
 openssl req -nodes -sha256 -newkey rsa:2048 -keyout ca.key -out ca.csr -subj "/C=US/ST=ST/L=Loc/O=Org/OU=OU/CN=guac"
 openssl x509 -req -sha256 -days 365 -in ca.csr -signkey ca.key -out ca.crt
 cp ca.crt /etc/pki/tls/certs/
