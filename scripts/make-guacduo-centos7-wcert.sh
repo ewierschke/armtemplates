@@ -201,7 +201,14 @@ write_brand()
 write_legal()
 {
     log "Writing Guac legal notice html extension file to add in custom URLs"
-    cp /etc/issue /etc/guacamole/extensions/issue
+    readarray issuecontent < /etc/issue
+    slash="\S"
+    if [[ $slash = $issuecontent ]] 
+    then 
+        echo -n "" > /etc/guacamole/extensions/issue
+    else
+        cp /etc/issue /etc/guacamole/extensions/issue
+    fi
     sed -i 's/\r//g' /etc/guacamole/extensions/issue
     sed -i ':a;N;$!ba;s/\n//g' /etc/guacamole/extensions/issue
     sed -i 's|\. |\.<br /><br />|g' /etc/guacamole/extensions/issue && sed -i 's|\.<br /><br />|\. |1' /etc/guacamole/extensions/issue
