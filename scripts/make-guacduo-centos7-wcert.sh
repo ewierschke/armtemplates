@@ -908,7 +908,7 @@ chmod 644 /etc/httpd/conf.d/ssl.conf
 #ensure varVol is large enough for extensions
 varsize=$(lvdisplay | awk '/varVol/{found=1}; /LV Size/ && found{print $3; exit}')
 thisvarsize=${varsize%%.*}
-if [ "$thisvarsize" -le 1 ]
+if [ "$thisvarsize" -ge 800 ]
     then lvextend -L+2G /dev/VolGroup00/varVol
     resize2fs /dev/VolGroup00/varVol
 fi
