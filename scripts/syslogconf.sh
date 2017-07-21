@@ -21,6 +21,14 @@ chkconfig rsyslog on
 firewall-cmd --zone=public --add-service=syslog
 firewall-cmd --zone=public --permanent --add-service=syslog
 
+#ensure varVol is large enough for extensions
+varsize=$(lvdisplay | awk '/varVol/{found=1}; /LV Size/ && found{print $3; exit}')
+thisvarsize=${varsize%%.*}
+if [ "$thisvarsize" -ge 800 ]
+    then lvextend -L+2G /dev/VolGroup00/varVol
+    resize2fs /dev/VolGroup00/varVol
+fi
+
 #schedule yum update and reboot
 (
     printf "yum -y update\n"
