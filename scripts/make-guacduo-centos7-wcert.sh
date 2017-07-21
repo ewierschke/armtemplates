@@ -937,6 +937,6 @@ done
     printf "yum -y update\n"
     printf "shutdown -r now\n"
 ) > /root/update.sh
-chmod 755 /root/update.sh
+chmod 777 /root/update.sh
 yum -y install at
 at now + 3 minutes -f /root/update.sh
