@@ -688,8 +688,11 @@ then
             "${LDAP_CERT}" -O ${LDAP_HOSTNAME}.cer|| \
             die "Could not download ldap cert"
             log "Adding LDAP Cert to tomcat cacerts"
-            #centos7 path to cacerts file, other OS may differ
+            #centos7 path to cacerts file, other OS may differ, may be able to remove if update-ca-trust works below
             keytool -import -trustcacerts -keystore /etc/pki/ca-trust/extracted/java/cacerts -storepass changeit -noprompt -alias "${LDAP_HOSTNAME}" -file "${LDAP_HOSTNAME}.cer"
+            #add cert to local trust to prevent removale from jvm at update
+            cp "${LDAP_HOSTNAME}.cer" /etc/pki/ca-trust/source/anchors/
+            update-ca-trust enable; update-ca-trust extract
             if [[ $? -ne 0 ]]
             then
                 die "Failed to add cert to cacerts, check cert format"
@@ -842,11 +845,11 @@ firewall-cmd --zone=public --permanent --add-service=https
 log "Creating dummy self-signed cert"
 yum -y install mod_ssl openssl httpd
 cd /root/
-openssl req -nodes -sha256 -newkey rsa:2048 -keyout ca.key -out ca.csr -subj "/C=US/ST=ST/L=Loc/O=Org/OU=OU/CN=guac"
-openssl x509 -req -sha256 -days 365 -in ca.csr -signkey ca.key -out ca.crt
-cp ca.crt /etc/pki/tls/certs/
-cp ca.key /etc/pki/tls/private/
-cp ca.csr /etc/pki/tls/private/
+openssl req -nodes -sha256 -newkey rsa:2048 -keyout selfsigned.key -out selfsigned.csr -subj "/C=US/ST=ST/L=Loc/O=Org/OU=OU/CN=guac"
+openssl x509 -req -sha256 -days 365 -in selfsigned.csr -signkey selfsigned.key -out selfsigned.crt
+cp selfsigned.crt /etc/pki/tls/certs/
+cp selfsigned.key /etc/pki/tls/private/
+cp selfsigned.csr /etc/pki/tls/private/
 
 #Configure Apache to use self signed cert
 mv /etc/httpd/conf.d/ssl.conf /etc/httpd/conf.d/ssl.conf.bak
@@ -872,8 +875,8 @@ log "Writing new /etc/httpd/conf.d/ssl.conf"
     printf "LogLevel warn\n"
     printf "SSLEngine On\n"
     printf "\n"
-    printf "SSLCertificateFile /etc/pki/tls/certs/ca.crt\n"
-    printf "SSLCertificateKeyFile /etc/pki/tls/private/ca.key\n"
+    printf "SSLCertificateFile /etc/pki/tls/certs/selfsigned.crt\n"
+    printf "SSLCertificateKeyFile /etc/pki/tls/private/selfsigned.key\n"
     printf "\n"
     printf "BrowserMatch \".*MSIE.*\" nokeepalive ssl-unclean-shutdown downgrade-1.0 force-response-1.0\n"
     printf "\n"
@@ -929,3 +932,11 @@ do
     chkconfig ${SVC} on
 done
 
+#schedule update and reboot
+(
+    printf "yum -y update\n"
+    printf "shutdown -r now\n"
+) > /root/update.sh
+chmod 755 /root/update.sh
+yum -y install at
+at now + 3 minutes -f /root/update.sh
