@@ -212,7 +212,8 @@ write_legal()
     fi
     sed -i 's/\r//g' /etc/guacamole/extensions/issue
     sed -i ':a;N;$!ba;s/\n//g' /etc/guacamole/extensions/issue
-    sed -i 's|\. |\.<br /><br />|g' /etc/guacamole/extensions/issue && sed -i 's|\.<br /><br />|\. |1' /etc/guacamole/extensions/issue
+    sed -i 's|\: |\:<br /><br />|g' /etc/guacamole/extensions/issue
+    sed -i 's|\. |\.<br /><br />|g' /etc/guacamole/extensions/issue && sed -i 's|\.<br /><br />|\. |1' /etc/guacamole/extensions/issue && sed -i 's|\.<br /><br />|\. |6' /etc/guacamole/extensions/issue
     ISSUE=$(cat /etc/guacamole/extensions/issue)
     (
         printf "<meta name=\"after\" content=\".login-ui .login-dialog\">\n"
@@ -875,7 +876,6 @@ log "Writing new /etc/httpd/conf.d/ssl.conf"
     printf "SSLCertificateKeyFile /etc/pki/tls/private/ca.key\n"
     printf "\n"
     printf "BrowserMatch \".*MSIE.*\" nokeepalive ssl-unclean-shutdown downgrade-1.0 force-response-1.0\n"
-    printf "SSLCipherSuite ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP:+eNULL\n"
     printf "\n"
     printf "ServerName guac\n"
     printf "ServerAlias guac\n"
@@ -888,6 +888,16 @@ log "Writing new /etc/httpd/conf.d/ssl.conf"
     printf "ProxyPassReverse / http://localhost:8080/\n"
     printf "\n"
     printf "</VirtualHost>\n"
+    printf "\n"
+    printf "SSLCipherSuite EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH\n"
+    printf "SSLProtocol All -SSLv2 -SSLv3\n"
+    printf "SSLHonorCipherOrder On\n"
+    printf "Header always set Strict-Transport-Security \"max-age=63072000; includeSubdomains; preload\"\n"
+    printf "Header always set X-Frame-Options DENY\n"
+    printf "Header always set X-Content-Type-Options nosniff\n"
+    printf "SSLCompression off\n"
+    printf "SSLUseStapling on\n"
+    printf "SSLStaplingCache \"shmcb:logs/stapling-cache(150000)\"\n"
 ) > /etc/httpd/conf.d/ssl.conf
 chmod 644 /etc/httpd/conf.d/ssl.conf
 
