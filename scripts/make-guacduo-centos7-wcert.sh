@@ -939,4 +939,6 @@ done
 ) > /root/update.sh
 chmod 777 /root/update.sh
 yum -y install at
+service atd start
+chkconfig atd on
 at now + 3 minutes -f /root/update.sh
