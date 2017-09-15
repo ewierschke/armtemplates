@@ -20,7 +20,7 @@
 #
 #################################################################
 __ScriptName="make-guac-centos.sh"
-__GuacVersion="0.9.12-incubating"
+__GuacVersion="0.9.13-incubating"
 
 log()
 {
@@ -132,6 +132,8 @@ usage()
   -c  URL from which to download untrusted LDAP server public certificate
       to be added to tomcat cacerts store for LDAPS connection.
   -B  Text for branding of the homepage. Default is "Apache Guacamole".
+  -b  Write out /etc/issue contents on logon page (yes if parameter selected)
+  -o  URL from which to download PNG image to be used for logo.
 EOT
 }  # ----------  end of function usage  ----------
 
@@ -145,16 +147,29 @@ write_manifest()
         printf "\"guacamoleVersion\" : \"$GUAC_VERSION\",\n"
         printf "\"name\" : \"Custom Extension\",\n"
         printf "\"namespace\" : \"custom-extension\",\n"
+        printf "\"css\" : [ \"css/logo-override.css\" ],\n"
         printf "\"html\" : [ \"custom-urls.html\" ],\n"
-        printf "\"translations\" : [ \"translations/en.json\" ]\n"
+        printf "\"translations\" : [ \"translations/en.json\" ],\n"
+        printf "\"resources\" : {\n"
+        printf "    \"images/custom-logo.png\" : \"image/png\"\n"
+        printf "}\n"
         printf "}\n"
     ) > /etc/guacamole/extensions/guac-manifest.json
-    #if ! ( [[ -n "${URL_1}" ]] || [[ -n "${URL_2}" ]] )
+    zero=0
+    #if ! ( [[ -n "${URL_1}" ]] || [[ -n "${URL_2}" ]] || [[ "${BANNER}" == "${zero}" ]] )
     #then
     #    sed -i '/html/d' /etc/guacamole/extensions/guac-manifest.json
     #fi
+    mkdir -p /etc/guacamole/extensions/css
+    log "Writing placeholder custom css for custom Guac extension pointing to standard guac logo"
+    (
+        printf ".login-ui .login-dialog .logo {\n"
+        printf "    background-image: url('images/guac-tricolor.png');\n"
+        printf "}\n"
+    ) > /etc/guacamole/extensions/css/logo-override.css
     cd "/etc/guacamole/extensions"
     zip -u "custom.jar" "guac-manifest.json"
+    zip -u "custom.jar" "css/logo-override.css"
 }  # ----------  end of function write_manifest  ----------
 
 
@@ -230,6 +245,35 @@ write_legal()
 }  # ----------  end of function write_legal  ----------
 
 
+#Replace Guac logo in extension file
+write_logo()
+{
+    log "Update custom extension to replace Guac logo"
+    yum -y install ImageMagick
+    log "Downloading logo file"
+    retry 5 wget --timeout=10 \
+    "${LOGO_URL}" -O /etc/guacamole/extensions/images/custom-logo.png || \
+    die "Could not download logo file"
+    imagetype=$(identify /etc/guacamole/extensions/images/custom-logo.png | awk '{print $2}')
+    pngcheck=PNG
+    cd "/etc/guacamole/extensions"
+    if [[ "${pngcheck}" == "${imagetype}" ]] 
+    then 
+        log "Overwriting custom css for Guac custom extension file"
+        (
+            printf ".login-ui .login-dialog .logo {\n"
+            printf "    background-image: url('app/ext/custom-extension/images/custom-logo.png');\n"
+            printf "}\n"
+        ) > /etc/guacamole/extensions/css/logo-override.css
+        zip -u "custom.jar" "images/custom-logo.png"
+        zip -u "custom.jar" "css/logo-override.css"
+        log "Successfully added logo image to custom extension"
+    else
+        log "Invalid PNG image passed to parameter, not changing logo"
+    fi
+}  # ----------  end of function write_logo  ----------
+
+
 # Define default values
 LDAP_HOSTNAME=
 LDAP_DOMAIN_DN=
@@ -253,10 +297,11 @@ DUO_SECRET=
 DUO_APPKEY=
 LDAP_CERT=
 BRANDTEXT=
-
+BANNER=0
+LOGO_URL=
 
 # Parse command-line parameters
-while getopts :hH:D:U:R:A:C:P:v:G:g:S:s:L:T:l:t:d:I:i:K:c:B: opt
+while getopts :hH:D:U:R:A:C:P:v:G:g:S:s:L:T:l:t:d:I:i:K:c:B:o: opt
 do
     case "${opt}" in
         h)
@@ -328,6 +373,12 @@ do
             ;;
         B)
             BRANDTEXT="${OPTARG}"
+            ;;
+        b)
+            BANNER=1
+            ;;
+        o)
+            LOGO_URL="${OPTARG}"
             ;;
         \?)
             usage
@@ -707,7 +758,7 @@ then
             echo "ldap-group-base-dn:      ${LDAP_GROUP_BASE},${LDAP_DOMAIN_DN}"
         ) >> /etc/guacamole/guacamole.properties
 
-        if [[ "$GUAC_VERSION" == "0.9.7" || "$GUAC_VERSION" == "0.9.12-incubating" ]]
+        if [[ "$GUAC_VERSION" == "0.9.7" || "$GUAC_VERSION" == "0.9.13-incubating" ]]
         then
             log "Enabling custom RBAC jar for ${GUAC_VERSION}"
             rm -rf "/etc/guacamole/extensions/*"
@@ -791,6 +842,17 @@ then
 fi
 
 
+#Add legal banner to Guacamole login page using Guac extensions.
+one=1
+if ( [[ "${BANNER}" == "${one}" ]] )
+then
+    write_manifest
+    write_legal
+else
+    log "Banner parameter not set, not adding legal"
+fi
+
+
 #Add custom URLs to Guacamole login page using Guac extensions.
 if ( [[ -n "${URL_1}" ]] || [[ -n "${URL_2}" ]] )
 then
@@ -798,16 +860,6 @@ then
     write_links
 else
     log "URL parameters were blank, not adding links"
-fi
-
-
-#Add legal banner to Guacamole login page using Guac extensions.
-if ( [[ -z "${URL_1}" ]] || [[ -z "${URL_2}" ]] )
-then
-    write_manifest
-    write_legal
-else
-    log "URL parameters were not blank, not adding legal"
 fi
 
 
@@ -826,6 +878,16 @@ else
 fi
 
 
+#Add custom logo to logon page.
+if [[ -n "${LOGO_URL}" ]]
+then
+    write_manifest
+    write_logo
+else
+   log "Logo URL parameter was blank, keeping default logo"
+fi
+
+
 #environment variable not working, creating symlink and copying extensions
 mkdir -p /usr/share/tomcat/.guacamole/{extensions,lib}
 ln -s /etc/guacamole/guacamole.properties /usr/share/tomcat/.guacamole/
@@ -841,8 +903,8 @@ firewall-cmd --zone=public --permanent --add-service=https
 #firewall-cmd --zone=public --permanent --add-port=8080/tcp
 
 
-#Build self signed cert install apache
-log "Creating dummy self-signed cert"
+#Build self signed cert for use on apache
+log "Creating self-signed cert"
 yum -y install mod_ssl openssl httpd
 cd /root/
 openssl req -nodes -sha256 -newkey rsa:2048 -keyout selfsigned.key -out selfsigned.csr -subj "/C=US/ST=ST/L=Loc/O=Org/OU=OU/CN=guac"
