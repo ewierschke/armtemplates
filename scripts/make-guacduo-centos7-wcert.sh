@@ -250,6 +250,7 @@ write_logo()
 {
     log "Update custom extension to replace Guac logo"
     yum -y install ImageMagick
+    mkdir -p /etc/guacamole/extensions/images
     log "Downloading logo file"
     retry 5 wget --timeout=10 \
     "${LOGO_URL}" -O /etc/guacamole/extensions/images/custom-logo.png || \
