@@ -188,10 +188,10 @@ write_links()
         printf "<a target=\"_blank\" href=\"${URL_2}\">${URLTEXT_2}</a>\n"
         printf "</p>\n"
         printf "</div>\n"
-    ) > /etc/guacamole/extensions/custom-urls.html
+    ) >> /etc/guacamole/extensions/custom-urls.html
     cd "/etc/guacamole/extensions"
     zip -u "custom.jar" "custom-urls.html"
-    cp /etc/guacamole/extensions/custom.jar /usr/share/tomcat/.guacamole/extensions/
+    #cp /etc/guacamole/extensions/custom.jar /usr/share/tomcat/.guacamole/extensions/
     log "Successfully added URL(s) to Guacamole login page"
 }  # ----------  end of function write_links  ----------
 
@@ -238,7 +238,7 @@ write_legal()
         printf "${ISSUE}\n"
         printf "</p>\n"
         printf "</div>\n"
-    ) > /etc/guacamole/extensions/custom-urls.html
+    ) >> /etc/guacamole/extensions/custom-urls.html
     cd "/etc/guacamole/extensions"
     zip -u "custom.jar" "custom-urls.html"
     log "Successfully added legal notice to Guacamole login page"
@@ -867,12 +867,7 @@ fi
 #Add custom branding text to title page.
 if [[ -n "${BRANDTEXT}" ]]
 then
-    #mkdir -p /etc/guacamole/extensions/translations
-    #mkdir -p /usr/share/tomcat/.guacamole/extensions/translations
-    if [ ! -f "/etc/guacamole/extensions/guac-manifest.json" ]
-    then
-        write_manifest
-    fi
+    write_manifest
     write_brand
 else
    log "Branding text was blank, keeping default text"
