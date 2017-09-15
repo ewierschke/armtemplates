@@ -853,6 +853,7 @@ else
     log "Banner parameter not set, not adding legal"
 fi
 
+sleep 2
 
 #Add custom URLs to Guacamole login page using Guac extensions.
 if ( [[ -n "${URL_1}" ]] || [[ -n "${URL_2}" ]] )
@@ -889,6 +890,7 @@ mkdir -p /usr/share/tomcat/.guacamole/{extensions,lib}
 ln -s /etc/guacamole/guacamole.properties /usr/share/tomcat/.guacamole/
 ln -s /etc/guacamole/logback.xml /usr/share/tomcat/.guacamole/
 cp /etc/guacamole/extensions/guacamole-auth-* /usr/share/tomcat/.guacamole/extensions/
+log "Copying custom.jar to guac home path"
 cp /etc/guacamole/extensions/custom.jar /usr/share/tomcat/.guacamole/extensions/
 
 
