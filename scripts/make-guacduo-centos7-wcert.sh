@@ -301,7 +301,7 @@ BANNER=0
 LOGO_URL=
 
 # Parse command-line parameters
-while getopts :hH:D:U:R:A:C:P:v:G:g:S:s:L:T:l:t:d:I:i:K:c:B:o: opt
+while getopts :hH:D:U:R:A:C:P:v:G:g:S:s:L:T:l:t:d:I:i:K:c:B:b:o: opt
 do
     case "${opt}" in
         h)
