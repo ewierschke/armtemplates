@@ -895,7 +895,7 @@ cp /etc/guacamole/extensions/custom.jar /usr/share/tomcat/.guacamole/extensions/
 
 
 #Adjust firewalld
-setenforce 0 && firewall-cmd --permanent --add-service=http && setenforce 1
+setenforce 0 && firewall-cmd --permanent --add-service=https && setenforce 1
 firewall-cmd --zone=public --add-service=https
 #firewall-cmd --zone=public --add-port=8080/tcp
 #firewall-cmd --zone=public --permanent --add-port=8080/tcp
@@ -1001,4 +1001,4 @@ chmod 777 /root/update.sh
 yum -y install at
 service atd start
 chkconfig atd on
-at now + 3 minutes -f /root/update.sh
+#at now + 3 minutes -f /root/update.sh
