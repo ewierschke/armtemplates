@@ -20,7 +20,7 @@
 #
 #################################################################
 __ScriptName="make-guac-centos.sh"
-__GuacVersion="0.9.12-incubating"
+__GuacVersion="0.9.13-incubating"
 
 log()
 {
