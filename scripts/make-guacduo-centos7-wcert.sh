@@ -997,9 +997,9 @@ done
 (
     printf "yum -y update\n"
     printf "shutdown -r now\n"
-) > /root/update.sh
-chmod 777 /root/update.sh
+) > /root/yumupdateandreboot.sh
+chmod 755 /root/yumupdateandreboot.sh
 yum -y install at
 service atd start
 chkconfig atd on
-at now + 3 minutes -f /root/update.sh
+at now + 3 minutes -f /root/yumupdateandreboot.sh
