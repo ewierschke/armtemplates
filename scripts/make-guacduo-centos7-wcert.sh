@@ -132,7 +132,7 @@ usage()
   -c  URL from which to download untrusted LDAP server public certificate
       to be added to tomcat cacerts store for LDAPS connection.
   -B  Text for branding of the homepage. Default is "Apache Guacamole".
-  -b  Write out /etc/issue contents on logon page (yes if parameter selected)
+  -b  Write out /etc/issue contents as legal banner on logon page (yes if parameter selected)
   -o  URL from which to download PNG image to be used for logo.
 EOT
 }  # ----------  end of function usage  ----------
@@ -212,7 +212,7 @@ write_brand()
 }  # ----------  end of function write_brand  ----------
 
 
-#Guac legal notice html extension file
+#Guac legal banner/notice html extension file
 write_legal()
 {
     log "Writing Guac legal notice html extension file to add in custom URLs"
@@ -488,16 +488,6 @@ retry 2 yum -y install epel-release
 log "Installing common tools"
 retry 5 yum -y install yum-utils yum-plugin-fastestmirror wget ntp zip
 
-#log "Ensuring the CentOS Base repo is available"
-#retry 5 curl -s --show-error --retry 5 -L "https://raw.githubusercontent.com/plus3it/cfn/master/scripts/CentOS-Base.repo" \
-#    -o "/etc/yum.repos.d/CentOS-Base.repo"
-
-#retry 5 curl -s --show-error --retry 5 -L "https://raw.githubusercontent.com/plus3it/cfn/master/scripts/RPM-GPG-KEY-CentOS-6" \
-#    -o "/etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-6"
-
-#log "Enabling the EPEL and base repos"
-#yum-config-manager --enable epel base
-
 log "Installing OS standard Tomcat"
 retry 5 yum -y install tomcat || die "Failed to install tomcat"
 
@@ -544,7 +534,6 @@ retry 5 wget --timeout=10 "${GUAC_SOURCE}/${GUAC_FILEBASE}.tar.gz" || \
     die "Could not download ${GUAC_FILEBASE}.tar.gz"
 tar -xvf ${GUAC_FILEBASE}.tar.gz || \
     die "Could not extract ${GUAC_FILEBASE}.tar.gz"
-
 cd "${GUAC_FILEBASE}"
 log "Building ${GUAC_FILEBASE} from source"
 ./configure --with-init-dir=/etc/init.d
@@ -577,9 +566,6 @@ do
         fi
     fi
 done
-#chmod 755 /etc/guacamole
-#chmod 755 /etc/guacamole/lib/
-#chmod 755 /etc/guacamole/extensions/
 
 
 # Install the Guacamole client
@@ -722,8 +708,6 @@ then
         die "Could not extract Guacamole ldap plugin"
 
     log "Installing Guacamole ldap .jar file in the extensions directory"
-    ## Can only have one extension at a time, so ensure the directory is empty
-    #rm -rf "/etc/guacamole/extensions/*"
     cp "${GUAC_LDAP}/${GUAC_LDAP}.jar" "/etc/guacamole/extensions"
     chmod 644 "/etc/guacamole/extensions/""${GUAC_LDAP}.jar"
 
@@ -780,28 +764,13 @@ then
         die "Unknown LDAP port number"
     fi
 
-    # Enable LDAP group based authorization
+    # Enable LDAP group based authorization, configure location to find LDAP groups
     if [ -n "$LDAP_GROUP_BASE" ]
     then
         log "Adding the LDAP group base DN, RBAC is enabled."
         (
             echo "ldap-group-base-dn:      ${LDAP_GROUP_BASE},${LDAP_DOMAIN_DN}"
         ) >> /etc/guacamole/guacamole.properties
-#UNNEEDED-prior custom functionality added to official guacamole ldap extension after 0.9.9?
-#        if [[ "$GUAC_VERSION" == "0.9.7" || "$GUAC_VERSION" == "0.9.9" ]]
-#        then
-#            log "Enabling custom RBAC jar for ${GUAC_VERSION}"
-#            rm -rf "/etc/guacamole/extensions/*"
-#            cd "/etc/guacamole/extensions/"
-#            curl -s --show-error --retry 5 -O "https://s3.amazonaws.com/app-chemistry/files/guacamole-auth-ldap-${GUAC_VERSION}.tar.gz" || \
-#                die "Unable to download ${GUAC_VERSION} custom plugin from s3 bucket"
-#            #if [[ $(file "/etc/guacamole/extensions/guacamole-auth-ldap-${GUAC_VERSION}.jar" | grep -q "Zip archive data")$? -ne 0 ]]
-#            #then
-#            #    die "Error: Detected /etc/guacamole/extensions/guacamole-auth-ldap-${GUAC_VERSION}.jar is not zip archive data!"
-#            #fi
-#        else
-#            log "Warning: Unknown RBAC support in this GUAC version, ${GUAC_VERSION}. Only 0.9.7 or 0.9.9 are known to work!"
-#        fi
     fi
 fi
 
@@ -921,21 +890,24 @@ mkdir -p /usr/share/tomcat/.guacamole/{extensions,lib}
 ln -s /etc/guacamole/guacamole.properties /usr/share/tomcat/.guacamole/
 ln -s /etc/guacamole/logback.xml /usr/share/tomcat/.guacamole/
 cp /etc/guacamole/extensions/guacamole-auth-* /usr/share/tomcat/.guacamole/extensions/
-log "Copying custom.jar to guac home path"
-cp /etc/guacamole/extensions/custom.jar /usr/share/tomcat/.guacamole/extensions/
+log "If created earlier, copying custom.jar to guac home path"
+if [[ -e /etc/guacamole/extensions/custom.jar ]] 
+then
+    cp /etc/guacamole/extensions/custom.jar /usr/share/tomcat/.guacamole/extensions/
+fi
 
-
-#Adjust firewalld
+# Adjust firewalld
 firewall-offline-cmd --zone=public --permanent --add-service=https
 firewall-offline-cmd --zone=public --add-service=https
 service firewalld start
 setenforce 0 && firewall-cmd --zone=public --permanent --add-service=https && setenforce 1
 setenforce 0 && firewall-cmd --zone=public --add-service=https && setenforce 1
+# Don't open 8080 when using apache httpd below
 #firewall-cmd --zone=public --add-port=8080/tcp
 #firewall-cmd --zone=public --permanent --add-port=8080/tcp
 
 
-#Build self signed cert for use on apache httpd as proxy
+# Build self signed cert for use on apache httpd as proxy
 log "Creating self-signed cert"
 yum -y install mod_ssl openssl httpd
 cd /root/
@@ -944,7 +916,7 @@ openssl x509 -req -sha256 -days 365 -in selfsigned.csr -signkey selfsigned.key -
 cp selfsigned.crt /etc/pki/tls/certs/
 cp selfsigned.key /etc/pki/tls/private/
 cp selfsigned.csr /etc/pki/tls/private/
-#Configure Apache to use self signed cert
+# Configure Apache to use self signed cert
 mv /etc/httpd/conf.d/ssl.conf /etc/httpd/conf.d/ssl.conf.bak
 cd /etc/httpd/conf.d/
 log "Writing new /etc/httpd/conf.d/ssl.conf"
@@ -998,7 +970,7 @@ log "Writing new /etc/httpd/conf.d/ssl.conf"
 chmod 644 /etc/httpd/conf.d/ssl.conf
 
 
-#ensure varVol is large enough for Azure extensions
+# Ensure varVol is large enough for Azure extensions
 varsize=$(lvdisplay | awk '/varVol/{found=1}; /LV Size/ && found{print $3; exit}')
 thisvarsize=${varsize%%.*}
 if [ -n "${thisvarsize}" ]
@@ -1029,7 +1001,7 @@ do
 done
 
 
-#schedule yum update and reboot
+# Schedule yum update and reboot
 (
     printf "yum -y update\n"
     printf "shutdown -r now\n"
