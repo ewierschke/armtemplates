@@ -741,6 +741,7 @@ then
             echo "ldap-config-base-dn:     ${LDAP_CONFIG_BASE},${LDAP_DOMAIN_DN}"
         ) >> /etc/guacamole/guacamole.properties
     elif [[ ${LDAP_PORT} -eq 636 ]] 
+    then
         log "Adding the LDAPS auth settings to guacamole.properties"
         (
             echo ""
@@ -775,6 +776,7 @@ then
             fi
         fi
     else
+        log "Unknown LDAP port number"
         die "Unknown LDAP port number"
     fi
 
@@ -999,9 +1001,13 @@ chmod 644 /etc/httpd/conf.d/ssl.conf
 #ensure varVol is large enough for Azure extensions
 varsize=$(lvdisplay | awk '/varVol/{found=1}; /LV Size/ && found{print $3; exit}')
 thisvarsize=${varsize%%.*}
-if [ "$thisvarsize" -ge 800 ]
-    then lvextend -L+2G /dev/VolGroup00/varVol
-    resize2fs /dev/VolGroup00/varVol
+if [ -n "${thisvarsize}" ]
+then 
+    if [ "${thisvarsize}" -ge 800 ]
+    then 
+        lvextend -L+2G /dev/VolGroup00/varVol
+        resize2fs /dev/VolGroup00/varVol
+    fi
 fi
 
 
