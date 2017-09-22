@@ -20,7 +20,7 @@
 #
 #################################################################
 __ScriptName="make-guac-centos.sh"
-__GuacVersion="0.9.12-incubating"
+__GuacVersion="0.9.13-incubating"
 
 log()
 {
@@ -132,6 +132,8 @@ usage()
   -c  URL from which to download untrusted LDAP server public certificate
       to be added to tomcat cacerts store for LDAPS connection.
   -B  Text for branding of the homepage. Default is "Apache Guacamole".
+  -b  Write out /etc/issue contents as legal banner on logon page (yes if parameter selected)
+  -o  URL from which to download PNG image to be used for logo.
 EOT
 }  # ----------  end of function usage  ----------
 
@@ -145,16 +147,29 @@ write_manifest()
         printf "\"guacamoleVersion\" : \"$GUAC_VERSION\",\n"
         printf "\"name\" : \"Custom Extension\",\n"
         printf "\"namespace\" : \"custom-extension\",\n"
+        printf "\"css\" : [ \"css/logo-override.css\" ],\n"
         printf "\"html\" : [ \"custom-urls.html\" ],\n"
-        printf "\"translations\" : [ \"translations/en.json\" ]\n"
+        printf "\"translations\" : [ \"translations/en.json\" ],\n"
+        printf "\"resources\" : {\n"
+        printf "    \"images/custom-logo.png\" : \"image/png\"\n"
+        printf "}\n"
         printf "}\n"
     ) > /etc/guacamole/extensions/guac-manifest.json
-    #if ! ( [[ -n "${URL_1}" ]] || [[ -n "${URL_2}" ]] )
+    zero=0
+    #if ! ( [[ -n "${URL_1}" ]] || [[ -n "${URL_2}" ]] || [[ "${BANNER}" == "${zero}" ]] )
     #then
     #    sed -i '/html/d' /etc/guacamole/extensions/guac-manifest.json
     #fi
+    mkdir -p /etc/guacamole/extensions/css
+    log "Writing placeholder custom css for custom Guac extension pointing to standard guac logo"
+    (
+        printf ".login-ui .login-dialog .logo {\n"
+        printf "    background-image: url('images/guac-tricolor.png');\n"
+        printf "}\n"
+    ) > /etc/guacamole/extensions/css/logo-override.css
     cd "/etc/guacamole/extensions"
     zip -u "custom.jar" "guac-manifest.json"
+    zip -u "custom.jar" "css/logo-override.css"
 }  # ----------  end of function write_manifest  ----------
 
 
@@ -173,10 +188,10 @@ write_links()
         printf "<a target=\"_blank\" href=\"${URL_2}\">${URLTEXT_2}</a>\n"
         printf "</p>\n"
         printf "</div>\n"
-    ) > /etc/guacamole/extensions/custom-urls.html
+    ) >> /etc/guacamole/extensions/custom-urls.html
     cd "/etc/guacamole/extensions"
     zip -u "custom.jar" "custom-urls.html"
-    cp /etc/guacamole/extensions/custom.jar /usr/share/tomcat/.guacamole/extensions/
+    #cp /etc/guacamole/extensions/custom.jar /usr/share/tomcat/.guacamole/extensions/
     log "Successfully added URL(s) to Guacamole login page"
 }  # ----------  end of function write_links  ----------
 
@@ -197,7 +212,7 @@ write_brand()
 }  # ----------  end of function write_brand  ----------
 
 
-#Guac legal notice html extension file
+#Guac legal banner/notice html extension file
 write_legal()
 {
     log "Writing Guac legal notice html extension file to add in custom URLs"
@@ -223,11 +238,41 @@ write_legal()
         printf "${ISSUE}\n"
         printf "</p>\n"
         printf "</div>\n"
-    ) > /etc/guacamole/extensions/custom-urls.html
+    ) >> /etc/guacamole/extensions/custom-urls.html
     cd "/etc/guacamole/extensions"
     zip -u "custom.jar" "custom-urls.html"
     log "Successfully added legal notice to Guacamole login page"
 }  # ----------  end of function write_legal  ----------
+
+
+#Replace Guac logo in extension file
+write_logo()
+{
+    log "Update custom extension to replace Guac logo"
+    yum -y install ImageMagick
+    mkdir -p /etc/guacamole/extensions/images
+    log "Downloading logo file"
+    retry 5 wget --timeout=10 \
+    "${LOGO_URL}" -O /etc/guacamole/extensions/images/custom-logo.png || \
+    die "Could not download logo file"
+    imagetype=$(identify /etc/guacamole/extensions/images/custom-logo.png | awk '{print $2}')
+    pngcheck=PNG
+    cd "/etc/guacamole/extensions"
+    if [[ "${pngcheck}" == "${imagetype}" ]] 
+    then 
+        log "Overwriting custom css for Guac custom extension file"
+        (
+            printf ".login-ui .login-dialog .logo {\n"
+            printf "    background-image: url('app/ext/custom-extension/images/custom-logo.png');\n"
+            printf "}\n"
+        ) > /etc/guacamole/extensions/css/logo-override.css
+        zip -u "custom.jar" "images/custom-logo.png"
+        zip -u "custom.jar" "css/logo-override.css"
+        log "Successfully added logo image to custom extension"
+    else
+        log "Invalid PNG image passed to parameter, not changing logo"
+    fi
+}  # ----------  end of function write_logo  ----------
 
 
 # Define default values
@@ -253,10 +298,11 @@ DUO_SECRET=
 DUO_APPKEY=
 LDAP_CERT=
 BRANDTEXT=
-
+BANNER=0
+LOGO_URL=
 
 # Parse command-line parameters
-while getopts :hH:D:U:R:A:C:P:v:G:g:S:s:L:T:l:t:d:I:i:K:c:B: opt
+while getopts :hH:D:U:R:A:C:P:v:G:g:S:s:L:T:l:t:d:I:i:K:c:B:o:b opt
 do
     case "${opt}" in
         h)
@@ -328,6 +374,12 @@ do
             ;;
         B)
             BRANDTEXT="${OPTARG}"
+            ;;
+        b)
+            BANNER=1
+            ;;
+        o)
+            LOGO_URL="${OPTARG}"
             ;;
         \?)
             usage
@@ -427,23 +479,14 @@ MODUSER="/usr/sbin/usermod"
 
 
 # Start the real work
+log "Clean yum cache"
+retry 5 yum clean all
+
 log "Installing EPEL repo"
 retry 2 yum -y install epel-release
 
+log "Installing common tools"
 retry 5 yum -y install yum-utils yum-plugin-fastestmirror wget ntp zip
-
-#log "Ensuring the CentOS Base repo is available"
-#retry 5 curl -s --show-error --retry 5 -L "https://raw.githubusercontent.com/plus3it/cfn/master/scripts/CentOS-Base.repo" \
-#    -o "/etc/yum.repos.d/CentOS-Base.repo"
-
-#retry 5 curl -s --show-error --retry 5 -L "https://raw.githubusercontent.com/plus3it/cfn/master/scripts/RPM-GPG-KEY-CentOS-6" \
-#    -o "/etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-6"
-
-#log "Enabling the EPEL and base repos"
-#yum-config-manager --enable epel base
-
-log "Clean yum cache"
-retry 5 yum clean all
 
 log "Installing OS standard Tomcat"
 retry 5 yum -y install tomcat || die "Failed to install tomcat"
@@ -491,7 +534,6 @@ retry 5 wget --timeout=10 "${GUAC_SOURCE}/${GUAC_FILEBASE}.tar.gz" || \
     die "Could not download ${GUAC_FILEBASE}.tar.gz"
 tar -xvf ${GUAC_FILEBASE}.tar.gz || \
     die "Could not extract ${GUAC_FILEBASE}.tar.gz"
-
 cd "${GUAC_FILEBASE}"
 log "Building ${GUAC_FILEBASE} from source"
 ./configure --with-init-dir=/etc/init.d
@@ -512,9 +554,18 @@ do
         fi
     fi
 done
-chmod 755 /etc/guacamole
-chmod 755 /etc/guacamole/lib/
-chmod 755 /etc/guacamole/extensions/
+# Set guacamole directories perms
+for GUAC_DIR in "/etc/guacamole" "/etc/guacamole/extensions" "/etc/guacamole/lib"
+do
+    if [[ ! -d "${GUAC_DIR}" ]]
+    then
+        log "setting perms on ${GUAC_DIR} directory"
+        if [[ $(chmod 755 "${GUAC_DIR}")$? -ne 0 ]]
+        then
+            die "Cannot set perms on ${GUAC_DIR}"
+        fi
+    fi
+done
 
 
 # Install the Guacamole client
@@ -541,6 +592,7 @@ then
 fi
 
 
+# Configure Guacamole
 # Create basic config files in /etc/guacamole
 cd /etc/guacamole
 log "Writing /etc/guacamole/guacamole.properties"
@@ -550,6 +602,7 @@ log "Writing /etc/guacamole/guacamole.properties"
     echo "guacd-port:          4822"
     echo "api-session-timeout: 15"
 ) > /etc/guacamole/guacamole.properties
+# Set guacamole.properties file perms
 chmod 644 /etc/guacamole/guacamole.properties
 log "Writing /etc/guacamole/logback.xml"
 (
@@ -570,6 +623,7 @@ log "Writing /etc/guacamole/logback.xml"
     printf "\n"
     printf "</configuration>\n"
 ) > /etc/guacamole/logback.xml
+# Set logback file perms
 chmod 644 /etc/guacamole/logback.xml
 log "Writing /etc/guacamole/guacd.conf"
 (
@@ -577,6 +631,8 @@ log "Writing /etc/guacamole/guacd.conf"
     printf "[daemon]\n"
     printf "log_level = debug\n"
 ) > /etc/guacamole/guacd.conf
+# Set guacd file perms
+chmod 644 /etc/guacamole/guacd.conf
 log "Writing /etc/rsyslog.d/00-guacd.conf"
 (
     printf "# Log guacd generated log messages to file\n"
@@ -585,7 +641,8 @@ log "Writing /etc/rsyslog.d/00-guacd.conf"
     printf "# Doing so means you'll also get GUACD messages in /var/log/syslog\n"
     printf "& ~\n"
 ) > /etc/rsyslog.d/00-guacd.conf
-chmod 644 /etc/guacamole/guacd.conf
+# Set 00-guacd.conf file perms
+chmod 644 /etc/rsyslog.d/00-guacd.conf
 
 if [ -n "${GUAC_USERNAME}" ]
 then
@@ -637,7 +694,6 @@ fi
 
 if [ -n "${LDAP_HOSTNAME}" ]
 then
-
     # Install the Guacamole LDAP auth extension
     log "Downloading Guacmole ldap extension"
     GUAC_LDAP="guacamole-auth-ldap-${GUAC_VERSION}"
@@ -652,11 +708,10 @@ then
         die "Could not extract Guacamole ldap plugin"
 
     log "Installing Guacamole ldap .jar file in the extensions directory"
-    # Can only have one extension at a time, so ensure the directory is empty
-    rm -rf "/etc/guacamole/extensions/*"
     cp "${GUAC_LDAP}/${GUAC_LDAP}.jar" "/etc/guacamole/extensions"
     chmod 644 "/etc/guacamole/extensions/""${GUAC_LDAP}.jar"
 
+    #Configure guacamole.properties file for appropriate LDAP port number
     if [[ ${LDAP_PORT} -eq 389 ]] 
     then 
         log "Adding the LDAP auth settings to guacamole.properties"
@@ -669,7 +724,8 @@ then
             echo "ldap-username-attribute: ${LDAP_USER_ATTRIBUTE}"
             echo "ldap-config-base-dn:     ${LDAP_CONFIG_BASE},${LDAP_DOMAIN_DN}"
         ) >> /etc/guacamole/guacamole.properties
-    else 
+    elif [[ ${LDAP_PORT} -eq 636 ]] 
+    then
         log "Adding the LDAPS auth settings to guacamole.properties"
         (
             echo ""
@@ -683,6 +739,7 @@ then
         ) >> /etc/guacamole/guacamole.properties
         if [ -n "${LDAP_CERT}" ]
         then
+            # Install LDAPS certificate not in public chain
             log "Downloading cert for LDAP Hostname not in public chain"
             retry 5 wget --timeout=10 \
             "${LDAP_CERT}" -O ${LDAP_HOSTNAME}.cer|| \
@@ -690,37 +747,30 @@ then
             log "Adding LDAP Cert to tomcat cacerts"
             #centos7 path to cacerts file, other OS may differ, may be able to remove if update-ca-trust works below
             keytool -import -trustcacerts -keystore /etc/pki/ca-trust/extracted/java/cacerts -storepass changeit -noprompt -alias "${LDAP_HOSTNAME}" -file "${LDAP_HOSTNAME}.cer"
+            if [[ $? -ne 0 ]]
+            then
+                die "Failed to add cert to cacerts, check cert format"
+            fi
             #add cert to local trust to prevent removale from jvm at update
             cp "${LDAP_HOSTNAME}.cer" /etc/pki/ca-trust/source/anchors/
             update-ca-trust enable; update-ca-trust extract
             if [[ $? -ne 0 ]]
             then
-                die "Failed to add cert to cacerts, check cert format"
+                die "Failed to update-ca-trust, check cert format"
             fi
         fi
+    else
+        log "Unknown LDAP port number"
+        die "Unknown LDAP port number"
     fi
 
+    # Enable LDAP group based authorization, configure location to find LDAP groups
     if [ -n "$LDAP_GROUP_BASE" ]
     then
         log "Adding the LDAP group base DN, RBAC is enabled."
         (
             echo "ldap-group-base-dn:      ${LDAP_GROUP_BASE},${LDAP_DOMAIN_DN}"
         ) >> /etc/guacamole/guacamole.properties
-
-        if [[ "$GUAC_VERSION" == "0.9.7" || "$GUAC_VERSION" == "0.9.12-incubating" ]]
-        then
-            log "Enabling custom RBAC jar for ${GUAC_VERSION}"
-            rm -rf "/etc/guacamole/extensions/*"
-            cd "/etc/guacamole/extensions/"
-            curl -s --show-error --retry 5 -O "https://s3.amazonaws.com/app-chemistry/files/guacamole-auth-ldap-${GUAC_VERSION}.tar.gz" || \
-                die "Unable to download ${GUAC_VERSION} custom plugin from s3 bucket"
-            #if [[ $(file "/etc/guacamole/extensions/guacamole-auth-ldap-${GUAC_VERSION}.jar" | grep -q "Zip archive data")$? -ne 0 ]]
-            #then
-            #    die "Error: Detected /etc/guacamole/extensions/guacamole-auth-ldap-${GUAC_VERSION}.jar is not zip archive data!"
-            #fi
-        else
-            log "Warning: Unknown RBAC support in this GUAC version, ${GUAC_VERSION}. Only 0.9.7 or 0.9.9 are known to work!"
-        fi
     fi
 fi
 
@@ -742,7 +792,7 @@ then
     log "Installing Guacamole duo .jar file in the extensions directory"
     cp "${GUAC_DUO}/${GUAC_DUO}.jar" "/etc/guacamole/extensions"
     chmod 644 "/etc/guacamole/extensions/""${GUAC_DUO}.jar"
-    log "Adding the DUO auth settings to guacamole.properties"
+    log "Appending the DUO auth settings to guacamole.properties"
     (
         echo ""
         echo "# Properties used by the DUO Authentication plugin"
@@ -753,15 +803,15 @@ then
     ) >> /etc/guacamole/guacamole.properties
 fi
 
-
+# Housekeeping
 log "Creating shell-init profile files"
 echo "export GUACAMOLE_HOME=/etc/guacamole" > /etc/profile.d/guacamole.sh
 echo "setenv GUACAMOLE_HOME /etc/guacamole" > /etc/profile.d/guacamole.csh
 chmod 744 /etc/profile.d/guacamole.sh
 /etc/profile.d/guacamole.sh
-
 log "Setting SEL contexts on shell-init files"
 chcon system_u:object_r:bin_t:s0 /etc/profile.d/guacamole.*
+
 
 log "Ensuring freerdp plugins are linked properly"
 if [[ ! -d /usr/lib64/freerdp ]]
@@ -791,6 +841,20 @@ then
 fi
 
 
+#Add legal banner to Guacamole login page using Guac extensions.
+one=1
+if ( [[ "${BANNER}" == "${one}" ]] )
+then
+    write_manifest
+    write_legal
+else
+    log "Banner parameter not set, not adding legal"
+fi
+
+
+sleep 2
+
+
 #Add custom URLs to Guacamole login page using Guac extensions.
 if ( [[ -n "${URL_1}" ]] || [[ -n "${URL_2}" ]] )
 then
@@ -801,48 +865,50 @@ else
 fi
 
 
-#Add legal banner to Guacamole login page using Guac extensions.
-if ( [[ -z "${URL_1}" ]] || [[ -z "${URL_2}" ]] )
-then
-    write_manifest
-    write_legal
-else
-    log "URL parameters were not blank, not adding legal"
-fi
-
-
 #Add custom branding text to title page.
 if [[ -n "${BRANDTEXT}" ]]
 then
-    #mkdir -p /etc/guacamole/extensions/translations
-    #mkdir -p /usr/share/tomcat/.guacamole/extensions/translations
-    if [ ! -f "/etc/guacamole/extensions/guac-manifest.json" ]
-    then
-        write_manifest
-    fi
+    write_manifest
     write_brand
 else
    log "Branding text was blank, keeping default text"
 fi
 
 
-#environment variable not working, creating symlink and copying extensions
+#Add custom logo to logon page.
+if [[ -n "${LOGO_URL}" ]]
+then
+    write_manifest
+    write_logo
+else
+   log "Logo URL parameter was blank, keeping default logo"
+fi
+
+
+# GUACAMOLE_HOME shell-init script environment variable not working (with selinux?), creating symlink and copying extensions to tomcat path
 mkdir -p /usr/share/tomcat/.guacamole/{extensions,lib}
 ln -s /etc/guacamole/guacamole.properties /usr/share/tomcat/.guacamole/
 ln -s /etc/guacamole/logback.xml /usr/share/tomcat/.guacamole/
 cp /etc/guacamole/extensions/guacamole-auth-* /usr/share/tomcat/.guacamole/extensions/
-cp /etc/guacamole/extensions/custom.jar /usr/share/tomcat/.guacamole/extensions/
+log "If created earlier, copying custom.jar to guac home path"
+if [[ -e /etc/guacamole/extensions/custom.jar ]] 
+then
+    cp /etc/guacamole/extensions/custom.jar /usr/share/tomcat/.guacamole/extensions/
+fi
 
-
-#Adjust firewalld
-firewall-cmd --zone=public --add-service=https
-firewall-cmd --zone=public --permanent --add-service=https
+# Adjust firewalld
+firewall-offline-cmd --zone=public --permanent --add-service=https
+firewall-offline-cmd --zone=public --add-service=https
+service firewalld start
+setenforce 0 && firewall-cmd --zone=public --permanent --add-service=https && setenforce 1
+setenforce 0 && firewall-cmd --zone=public --add-service=https && setenforce 1
+# Don't open 8080 when using apache httpd below
 #firewall-cmd --zone=public --add-port=8080/tcp
 #firewall-cmd --zone=public --permanent --add-port=8080/tcp
 
 
-#Build self signed cert install apache
-log "Creating dummy self-signed cert"
+# Build self signed cert for use on apache httpd as proxy
+log "Creating self-signed cert"
 yum -y install mod_ssl openssl httpd
 cd /root/
 openssl req -nodes -sha256 -newkey rsa:2048 -keyout selfsigned.key -out selfsigned.csr -subj "/C=US/ST=ST/L=Loc/O=Org/OU=OU/CN=guac"
@@ -850,8 +916,7 @@ openssl x509 -req -sha256 -days 365 -in selfsigned.csr -signkey selfsigned.key -
 cp selfsigned.crt /etc/pki/tls/certs/
 cp selfsigned.key /etc/pki/tls/private/
 cp selfsigned.csr /etc/pki/tls/private/
-
-#Configure Apache to use self signed cert
+# Configure Apache to use self signed cert
 mv /etc/httpd/conf.d/ssl.conf /etc/httpd/conf.d/ssl.conf.bak
 cd /etc/httpd/conf.d/
 log "Writing new /etc/httpd/conf.d/ssl.conf"
@@ -905,12 +970,16 @@ log "Writing new /etc/httpd/conf.d/ssl.conf"
 chmod 644 /etc/httpd/conf.d/ssl.conf
 
 
-#ensure varVol is large enough for extensions
+# Ensure varVol is large enough for Azure extensions
 varsize=$(lvdisplay | awk '/varVol/{found=1}; /LV Size/ && found{print $3; exit}')
 thisvarsize=${varsize%%.*}
-if [ "$thisvarsize" -ge 800 ]
-    then lvextend -L+2G /dev/VolGroup00/varVol
-    resize2fs /dev/VolGroup00/varVol
+if [ -n "${thisvarsize}" ]
+then 
+    if [ "${thisvarsize}" -ge 800 ]
+    then 
+        lvextend -L+2G /dev/VolGroup00/varVol
+        resize2fs /dev/VolGroup00/varVol
+    fi
 fi
 
 
@@ -925,20 +994,20 @@ do
       die "Failed to start ${SVC}."
     fi
 done
-
 log "Enabling services to start at next boot"
 for SVC in tomcat guacd httpd ntpd
 do
     chkconfig ${SVC} on
 done
 
-#schedule update and reboot
+
+# Schedule yum update and reboot
 (
     printf "yum -y update\n"
     printf "shutdown -r now\n"
-) > /root/update.sh
-chmod 777 /root/update.sh
+) > /root/yumupdateandreboot.sh
+chmod 755 /root/yumupdateandreboot.sh
 yum -y install at
 service atd start
 chkconfig atd on
-at now + 3 minutes -f /root/update.sh
+at now + 3 minutes -f /root/yumupdateandreboot.sh
