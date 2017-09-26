@@ -390,7 +390,11 @@ do
 done
 shift $((OPTIND-1))
 
+log "Clean yum cache"
+retry 5 yum clean all
 
+log "Installing EPEL repo"
+retry 2 yum -y install epel-release
 # Validate parameters
 if [ -n "${LDAP_HOSTNAME}" ]
 then
@@ -479,12 +483,6 @@ MODUSER="/usr/sbin/usermod"
 
 
 # Start the real work
-log "Clean yum cache"
-retry 5 yum clean all
-
-log "Installing EPEL repo"
-retry 2 yum -y install epel-release
-
 log "Installing common tools"
 retry 5 yum -y install yum-utils yum-plugin-fastestmirror wget ntp zip
 
