@@ -1,2 +1,2 @@
-$customdata = Get-Content C:\AzureData\CustomData.bin
+$customdata = Get-Content %SYSTEMDRIVE%\AzureData\CustomData.bin
 Invoke-Expression $customdata
