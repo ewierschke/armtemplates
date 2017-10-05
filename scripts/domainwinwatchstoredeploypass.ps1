@@ -10,7 +10,7 @@ param (
 # Define System variables
 $credspath = "${env:SystemDrive}\buildscripts"
 $domainwinwatchstoredeploypassDir = "${env:SystemDrive}\buildscripts\1-domainwinwatchstoredeploypass"
-$nextscript = "schedwinwatch"
+$nextscript = "custextschedwinwatch"
 
 # Begin Script
 # Create the domainwinwatchstoredeploypass log directory
