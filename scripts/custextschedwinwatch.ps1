@@ -155,13 +155,22 @@ if ($PSVersionTable.psversion.major -ge 4) {
     invoke-expression "& $env:systemroot\system32\schtasks.exe /create /SC ONLOGON /RL HIGHEST /NP /V1 /RU SYSTEM /F /TR `"msg * /SERVER:%computername% ${msg}`" /TN `"${taskname}`"" 2>&1 | log -LogTag ${ScriptName}
 }
 #$Computer = $env:COMPUTERNAME;
-try {
+if (Test-Path "${credspath}\domainname.txt") {
     $DomainnameFilePath = "${credspath}\domainname.txt";
     $Domain = Get-Content ${DomainnameFilePath};
-}
-catch {
+    if ($Domain -eq $Null) {
+    $Domain = $env:computername;
+    }
+} else {
     $Domain = $env:computername;
 }
+#try {
+#    $DomainnameFilePath = "${credspath}\domainname.txt";
+#    $Domain = Get-Content ${DomainnameFilePath};
+#}
+#catch {
+#    $Domain = $env:computername;
+#}
 $UsernameFilePath = "${credspath}\lcladminname.txt";
 $Username = Get-Content ${UsernameFilePath};
 $LclAdminCredsFilePath = "${credspath}\lcladminpass.txt";
@@ -184,7 +193,10 @@ log -LogTag ${ScriptName} "deleting creds"
 Remove-Item "${credspath}\lcladminpass.txt" -Force -Recurse;
 Remove-Item "${credspath}\lcladminkey.txt" -Force -Recurse;
 Remove-Item "${credspath}\lcladminname.txt" -Force -Recurse;
-Remove-Item "${credspath}\domainname.txt" -Force -Recurse;
+if (Test-Path "${credspath}\domainname.txt") {
+    Remove-Item "${credspath}\domainname.txt" -Force -Recurse;
+} 
+#Remove-Item "${credspath}\domainname.txt" -Force -Recurse;
 
 log -LogTag ${ScriptName} "Rebooting"
 powershell.exe "Restart-Computer -Force -Verbose";
