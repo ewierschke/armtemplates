@@ -43,5 +43,5 @@ if ($PSVersionTable.psversion.major -ge 4) {
 } else {
     invoke-expression "& $env:systemroot\system32\schtasks.exe /create /SC ONLOGON /RL HIGHEST /NP /V1 /RU SYSTEM /F /TR `"msg * /SERVER:%computername% ${msg}`" /TN `"${taskname}`"" 2>&1 | log -LogTag ${ScriptName}
 }
-#Commenting out reboot bc domainjoin extension reboots
-#powershell.exe "Restart-Computer -Force -Verbose";
+
+powershell.exe "Restart-Computer -Force -Verbose";
