@@ -52,13 +52,13 @@ while ($sw.elapsed -lt $timeout){
     $diagvar = get-winevent -logname $provider.loglinks.logname | where {$_.ID -eq 3010} | where {$_.Message -like "*IaaSDiagnostics*"}
     if ($diagvar){
         write-host "Found the log!  Diag Ext successfully installed"
-        return
+        break
         }
  
     start-sleep -seconds 5
 }
  
-write-host "Timed out waiting for Diag Extension install"
+write-host "May have timed out waiting for Diag Extension install"
 
 # Check if OMS extension install succeeded
 $timeout = new-timespan -Minutes 10
@@ -68,13 +68,13 @@ while ($sw.elapsed -lt $timeout){
     $diagvar = get-winevent -logname $provider.loglinks.logname | where {$_.ID -eq 3010} | where {$_.Message -like "*MicrosoftMonitoringAgent*"}
     if ($diagvar){
         write-host "Found the log!  OMS Ext successfully installed"
-        return
+        break
         }
  
     start-sleep -seconds 5
 }
  
-write-host "Timed out waiting for OMS Extension install"
+write-host "May have timed out waiting for OMS Extension install"
 
 # Check if Domain Join extension install succeeded
 $timeout = new-timespan -Minutes 10
@@ -84,13 +84,13 @@ while ($sw.elapsed -lt $timeout){
     $diagvar = get-winevent -logname $provider.loglinks.logname | where {$_.ID -eq 3010} | where {$_.Message -like "*JSONADDomainExtension*"}
     if ($diagvar){
         write-host "Found the log!  Domain Join Ext successfully installed.. does not mean successfully joined domain"
-        return
+        break
         }
  
     start-sleep -seconds 5
 }
  
-write-host "Timed out waiting for Domain Join Extension install"
+write-host "May have timed out waiting for Domain Join Extension install"
 
 #reboot after previous vm extension install success including domainjoin extension
 start-sleep -seconds 60
