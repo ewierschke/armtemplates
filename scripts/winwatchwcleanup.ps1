@@ -27,7 +27,7 @@ try {
     Install-WindowsUpdate -MicrosoftUpdate -AcceptAll -IgnoreReboot
 }
 catch {
-    Write-Output "Oops. Something failed"
+    Write-Output "Oops. Something failed when installing patches"
 }
 
 #open IE to initialize cert
