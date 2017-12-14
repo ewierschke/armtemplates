@@ -1,9 +1,6 @@
 $BootstrapUrl = "https://raw.githubusercontent.com/plus3it/watchmaker/master/docs/files/bootstrap/watchmaker-bootstrap.ps1"
-$PythonUrl = "https://www.python.org/ftp/python/3.6.0/python-3.6.0-amd64.exe"
+$PythonUrl = "https://www.python.org/ftp/python/3.6.3/python-3.6.3-amd64.exe"
 $PypiUrl = "https://pypi.org/simple"
-
-# Get the host
-$PypiHost="$(([System.Uri]$PypiUrl).Host)"
 
 # Download bootstrap file
 $BootstrapFile = "${Env:Temp}\$(${BootstrapUrl}.split('/')[-1])"
@@ -13,7 +10,7 @@ $BootstrapFile = "${Env:Temp}\$(${BootstrapUrl}.split('/')[-1])"
 & "$BootstrapFile" -PythonUrl "$PythonUrl" -Verbose -ErrorAction Stop
 
 # Install watchmaker
-pip install --index-url="$PypiUrl" --trusted-host="$PypiHost" --upgrade pip setuptools watchmaker
+pip install --index-url="$PypiUrl" --upgrade pip setuptools watchmaker
 
 # Run watchmaker
 watchmaker --log-level debug --log-dir=C:\Watchmaker\Logs
