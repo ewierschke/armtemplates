@@ -12,7 +12,6 @@ $BootstrapFile = "${Env:Temp}\$(${BootstrapUrl}.split('/')[-1])"
 # Install watchmaker
 $WinWatchDir = "${env:SystemDrive}\winwatch"
 New-Item -Path $WinWatchDir -ItemType "directory" -Force 2>&1 > $null
-cd $WinWatchDir
 pip install --cache-dir $WinWatchDir --index-url="$PypiUrl" --upgrade pip setuptools watchmaker
 
 # Run watchmaker
