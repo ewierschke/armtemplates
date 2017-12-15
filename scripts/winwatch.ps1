@@ -10,7 +10,8 @@ $BootstrapFile = "${Env:Temp}\$(${BootstrapUrl}.split('/')[-1])"
 & "$BootstrapFile" -PythonUrl "$PythonUrl" -Verbose -ErrorAction Stop
 
 # Install watchmaker
-pip install --index-url="$PypiUrl" --upgrade pip setuptools watchmaker
+cd "${Env:Temp}"
+pip install --cache-dir ${Env:Temp} --index-url="$PypiUrl" --upgrade pip setuptools watchmaker
 
 # Run watchmaker
 watchmaker --log-level debug --log-dir=C:\Watchmaker\Logs
