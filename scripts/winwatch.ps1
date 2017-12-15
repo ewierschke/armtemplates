@@ -17,3 +17,4 @@ pip install --cache-dir $WinWatchDir --index-url="$PypiUrl" --upgrade pip setupt
 
 # Run watchmaker
 watchmaker --log-level debug --log-dir=C:\Watchmaker\Logs
+exit $LASTEXITCODE
