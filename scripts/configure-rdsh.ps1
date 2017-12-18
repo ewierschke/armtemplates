@@ -255,6 +255,10 @@ $null = Start-Process -FilePath ${GitInstaller} -ArgumentList ${GitParams} -Pass
 
 #(new-object Net.WebClient).DownloadString("http://psget.net/GetPsGet.ps1") | iex
 
+#Install updates
+. { iwr -useb http://boxstarter.org/bootstrapper.ps1 } | iex; get-boxstarter -Force
+Install-WindowsUpdate -SuppressReboots
+
 # Remove previous scheduled task
 log -LogTag ${ScriptName} "UnRegistering previous scheduled task"
 Unregister-ScheduledTask -TaskName "RunNextScript" -Confirm:$false;

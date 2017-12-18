@@ -10,6 +10,10 @@ param (
 # Remove previous scheduled task
 Unregister-ScheduledTask -TaskName "RunNextScript" -Confirm:$false;
 
+#Install Updates
+. { iwr -useb http://boxstarter.org/bootstrapper.ps1 } | iex; get-boxstarter -Force
+Install-WindowsUpdate -SuppressReboots
+
 #open IE to initialize cert
 $ie = new-object -com "InternetExplorer.Application"
 $ie.navigate("http://s3.amazonaws.com/app-chemistry/files/")
