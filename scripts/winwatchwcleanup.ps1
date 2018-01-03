@@ -12,6 +12,7 @@ Unregister-ScheduledTask -TaskName "RunNextScript" -Confirm:$false;
 
 #Install Updates
 . { iwr -useb http://boxstarter.org/bootstrapper.ps1 } | iex; get-boxstarter -Force
+Enable-MicrosoftUpdate
 Install-WindowsUpdate -SuppressReboots
 
 #open IE to initialize cert
