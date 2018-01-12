@@ -10,7 +10,7 @@ $BootstrapFile = "${Env:Temp}\$(${BootstrapUrl}.split('/')[-1])"
 # Install python
 $params = "`"$BootstrapFile`" -PythonUrl `"$PythonUrl`" -Verbose -ErrorAction Stop"
 Start-Process powershell -Argument $params -NoNewWindow -Wait
-$env:Path = "$env:Path;$env:ProgramFiles\Python36\Scripts\;$env:ProgramFiles\Python36\"
+#$env:Path = "$env:Path;$env:ProgramFiles\Python36\Scripts\;$env:ProgramFiles\Python36\"
 
 # Install watchmaker
 pip install --index-url="$PypiUrl" --upgrade pip setuptools watchmaker
