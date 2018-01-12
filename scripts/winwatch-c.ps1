@@ -7,8 +7,9 @@ $BootstrapFile = "${Env:Temp}\$(${BootstrapUrl}.split('/')[-1])"
 (New-Object System.Net.WebClient).DownloadFile("$BootstrapUrl", "$BootstrapFile")
 
 # Install python
+Get-ChildItem env: | Format-List | Out-File $env:windir\Temp\1-Beforebootstrap.log
 & "$BootstrapFile" -PythonUrl "$PythonUrl" -Verbose -ErrorAction Stop
-
+Get-ChildItem env: | Format-List | Out-File $env:windir\Temp\4-Afterbootstrap.log
 # Install watchmaker
 pip install --index-url="$PypiUrl" --upgrade pip setuptools watchmaker
 
