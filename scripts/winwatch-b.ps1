@@ -8,8 +8,10 @@ $BootstrapFile = "${Env:Temp}\$(${BootstrapUrl}.split('/')[-1])"
 (New-Object System.Net.WebClient).DownloadFile("$BootstrapUrl", "$BootstrapFile")
 
 # Install python
+Get-ChildItem env: | Format-List | Out-File $env:windir\Temp\Beforebootstrap.log
 $params = "`"$BootstrapFile`" -PythonUrl `"$PythonUrl`" -Verbose -ErrorAction Stop"
 Start-Process powershell -Argument $params -NoNewWindow -Wait
+Get-ChildItem env: | Format-List | Out-File $env:windir\Temp\Afterbootstrap.log
 #$env:Path = "$env:Path;$env:ProgramFiles\Python36\Scripts\;$env:ProgramFiles\Python36\"
 
 # Install watchmaker
