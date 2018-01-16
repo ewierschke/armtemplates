@@ -14,4 +14,7 @@ Get-ChildItem env: | Format-List | Out-File $env:windir\Temp\Afterbootstrap.log
 pip install --build "${Env:windir}\Temp" --index-url="$PypiUrl" --upgrade pip setuptools watchmaker
 
 # Run watchmaker
+$env:Temp = "${Env:windir}\Temp"
+$env:Tmp = "${Env:windir}\Temp"
+Get-ChildItem env: | Format-List | Out-File $env:windir\Temp\prewam.log
 watchmaker --log-level debug --log-dir=C:\Watchmaker\Logs
