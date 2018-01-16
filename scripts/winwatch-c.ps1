@@ -11,7 +11,7 @@ Get-ChildItem env: | Format-List | Out-File $env:windir\Temp\Beforebootstrap.log
 & "$BootstrapFile" -PythonUrl "$PythonUrl" -Verbose -ErrorAction Stop
 Get-ChildItem env: | Format-List | Out-File $env:windir\Temp\Afterbootstrap.log
 # Install watchmaker
-pip install --index-url="$PypiUrl" --upgrade pip setuptools watchmaker
+pip install --build "${Env:windir}\Temp" --index-url="$PypiUrl" --upgrade pip setuptools watchmaker
 
 # Run watchmaker
 watchmaker --log-level debug --log-dir=C:\Watchmaker\Logs
