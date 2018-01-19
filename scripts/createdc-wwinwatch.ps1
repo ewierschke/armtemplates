@@ -149,7 +149,7 @@ log -LogTag ${ScriptName} "Downloading DSC resources"
 #-setup-
 Invoke-WebRequest "https://raw.githubusercontent.com/ewierschke/armtemplates/runwincustdata/scripts/set-staticip.ps1" -OutFile "${createDCDir}\set-staticip.ps1"
 Invoke-WebRequest "https://raw.githubusercontent.com/plus3it/cfn/master/scripts/assert-computername.ps1" -OutFile "${createDCDir}\assert-computername.ps1"
-Invoke-WebRequest "https://raw.githubusercontent.com/plus3it/cfn/master/scripts/assert-hadc.ps1" -OutFile "${createDCDir}\assert-hadc.ps1"
+Invoke-WebRequest "https://raw.githubusercontent.com/ewierschke/armtemplates/runwincustdata/scripts/assert-hadc.ps1" -OutFile "${createDCDir}\assert-hadc.ps1"
 Invoke-WebRequest "https://raw.githubusercontent.com/plus3it/cfn/master/scripts/xcomputermanagement-1.3.0.zip" -OutFile "${createDCDir}\xcomputermanagement-1.3.0.zip"
 Invoke-WebRequest "https://raw.githubusercontent.com/plus3it/cfn/master/scripts/xactivedirectory-2.4.0.0.zip" -OutFile "${createDCDir}\xactivedirectory-2.4.0.0.zip"
 Invoke-WebRequest "https://raw.githubusercontent.com/plus3it/cfn/master/scripts/xnetworking-2.2.0.0.zip" -OutFile "${createDCDir}\xnetworking-2.2.0.0.zip"
