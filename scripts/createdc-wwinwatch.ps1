@@ -155,7 +155,7 @@ Invoke-WebRequest "https://raw.githubusercontent.com/plus3it/cfn/master/scripts/
 Invoke-WebRequest "https://raw.githubusercontent.com/plus3it/cfn/master/scripts/xnetworking-2.2.0.0.zip" -OutFile "${createDCDir}\xnetworking-2.2.0.0.zip"
 Invoke-WebRequest "https://raw.githubusercontent.com/plus3it/cfn/master/scripts/unzip-archive.ps1" -OutFile "${createDCDir}\unzip-archive.ps1"
 powershell.exe -Command "Get-NetFirewallProfile | Set-NetFirewallProfile -Enabled False"
-powershell.exe -command Set-ExecutionPolicy RemoteSigned -Force
+#powershell.exe -command Set-ExecutionPolicy RemoteSigned -Force
 powershell.exe -command ${createDCDir}\unzip-archive.ps1 -Source ${createDCDir}\xactivedirectory-2.4.0.0.zip -Destination '${env:ProgramFiles}\WindowsPowerShell\Modules'
 powershell.exe -command ${createDCDir}\unzip-archive.ps1 -Source ${createDCDir}\xnetworking-2.2.0.0.zip -Destination '${env:ProgramFiles}\WindowsPowerShell\Modules'
 powershell.exe -command ${createDCDir}\unzip-archive.ps1 -Source ${createDCDir}\xcomputermanagement-1.3.0.zip -Destination '${env:ProgramFiles}\WindowsPowerShell\Modules'

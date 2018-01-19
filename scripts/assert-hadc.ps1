@@ -101,7 +101,7 @@ Configuration AssertHADC
             DomainName = $Node.DomainName
             DomainAdministratorCredential = $DomainAdminCredential
             SafemodeAdministratorPassword = $RestoreModeCredential
-            DependsOn = '[xIPAddress]SetIP','[WindowsFeature]ADDSInstall','[User]SetAdminPw'
+            DependsOn = '[WindowsFeature]ADDSInstall','[User]SetAdminPw'
         }
 
         xWaitForADDomain DscForestWait
@@ -161,7 +161,7 @@ Configuration AssertHADC
             DomainName = $Node.DomainName
             DomainAdministratorCredential = $DomainAdminCredential
             SafemodeAdministratorPassword = $RestoreModeCredential
-            DependsOn = '[xIPAddress]SetIP','[xWaitForADDomain]DscForestWait'
+            DependsOn = '[xWaitForADDomain]DscForestWait'
         }
 
         # Remove ConfigStore as last step, as it will contain sensitive info
