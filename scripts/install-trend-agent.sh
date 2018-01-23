@@ -182,6 +182,6 @@ sleep 5
 /opt/ds_agent/dsa_control -r | log
 
 
-# Link to Trend Micro Deep Security Manager
-log "Linking Trend Micro Deep Security Agent to provided Trend Micro Deep Security Manager"
+# Activating against Trend Micro Deep Security Manager
+log "Activating Trend Micro Deep Security Agent to provided Trend Micro Deep Security Manager"
 /opt/ds_agent/dsa_control -a dsm://${MGR_HOSTNAME}:${PORT}/ "policyid:${POLICY_ID}" --dsm-retry-interval 10 --max-dsm-retries 3 | log
