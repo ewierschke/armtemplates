@@ -2,6 +2,8 @@
 # Description:
 # Trend Micro Deep Security Agent Installer for RHEL/CentOS 7
 #
+# Trend Micro Deep Security Manager must be configured to allow 
+# Agent Initiated Activation
 #################################################################
 __ScriptName="install-trend-agent.sh"
 
