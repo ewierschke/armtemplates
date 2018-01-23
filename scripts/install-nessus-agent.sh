@@ -110,7 +110,7 @@ RPM_URL=
 MGR_HOSTNAME=
 PORT="8834"
 AGENT_KEY=
-GROUPS=
+NESSUS_GROUPS=
 AGENT_NAME="$(hostname)"
 
 # Parse command-line parameters
@@ -134,7 +134,7 @@ do
             AGENT_KEY="${OPTARG}"
             ;;
         G)
-            GROUPS="${OPTARG}"
+            NESSUS_GROUPS="${OPTARG}"
             ;;
         N)
             AGENT_NAME="${OPTARG}"
@@ -152,24 +152,29 @@ shift $((OPTIND-1))
 # Validate parameters
 if [ -z "${RPM_URL}" ]
 then
-        die "No RPM_URL (-U) was provided, cannot download agent RPM; exiting"
+    die "No RPM_URL (-U) was provided, cannot download agent RPM; exiting"
 fi
 
 if [ -z "${MGR_HOSTNAME}" ]
 then
-        die "No MGR_HOSTNAME (-H) was provided, cannot link to Nessus Manager; exiting"
+    die "No MGR_HOSTNAME (-H) was provided, cannot link to Nessus Manager; exiting"
 fi
 
 if [ -z "${AGENT_KEY}" ]
 then
-        die "No AGENT_KEY (-K) was provided, cannot link  to Nessus Manager; exiting"
+    die "No AGENT_KEY (-K) was provided, cannot link  to Nessus Manager; exiting"
 fi
 
+if [ -n "${NESSUS_GROUPS}" ]
+then 
+    QUOTED_GROUPS=\"${NESSUS_GROUPS}\"
+fi
 
 # Check Permissions
-if [[ "$EUID" -ne 0 ]]; then
-        log "Must be run as root/sudo"
-        exit 1
+if [[ "$EUID" -ne 0 ]]
+  then
+    log "Must be run as root/sudo"
+    exit 1
 fi
 
 
@@ -188,13 +193,13 @@ retry 2 wget -O /root/nessusagent.rpm "${RPM_URL}" | log
 
 # Install agent rpm
 log "Installing Nessus Agent RPM"
-rpm -ihv /root/nessusagent.rpm
-sleep 15
+rpm -ihv --replacepkgs /root/nessusagent.rpm
+sleep 5
 
 
 # Link to Nessus Manager
 log "Linking Nessus Agent to provided Nessus Manager"
-/opt/nessus_agent/sbin/nessuscli agent link --key=${AGENT_KEY} --name=${AGENT_NAME} --groups="${GROUPS}" --host=${MGR_HOSTNAME} --port=${PORT}
+/opt/nessus_agent/sbin/nessuscli agent link --key=${AGENT_KEY} --name=${AGENT_NAME} --groups=${QUOTED_GROUPS} --host=${MGR_HOSTNAME} --port=${PORT}
 
 
 # Start Agent service
