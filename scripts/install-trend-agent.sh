@@ -1,9 +1,9 @@
 #!/bin/bash
 # Description:
-# Nessus Agent Installer for RHEL/CentOS 7
+# Trend Micro Deep Security Agent Installer for RHEL/CentOS 7
 #
 #################################################################
-__ScriptName="install-nessus-agent.sh"
+__ScriptName="install-trend-agent.sh"
 
 set -e
 set -o pipefail
@@ -30,7 +30,7 @@ log()
 die()
 {
     [ -n "$1" ] && log "$1"
-    log "Nessus Agent install failed"'!'
+    log "Trend Micro Deep Security Agent install failed"'!'
     exit 1
 }  # ----------  end of function die  ----------
 
@@ -93,14 +93,13 @@ usage()
 
   Options:
   -h  Display this message.
-  -U  URL from which to download the EL7 Nessus agent RPM.
-  -H  Hostname or IP of the Nessus Manager server to link to
-      (e.g. nessus.example.com). Using the FQDN is acceptable as long as it 
+  -U  URL from which to download the EL7 Trend Micro Deep Security agent RPM.
+  -H  Hostname or IP of the Trend Micro Deep Security Manager server to link to
+      (e.g. trend.example.com). Using the FQDN is acceptable as long as it 
       resolves correctly in your environment. 
-  -P  Port on which to connect to the Nessus Manager server. Default is "8834".
-  -K  Agent Key for the manager to which you are attempting to link this agent
-  -G  Existing Agent Group(s) that you want your Agent to be a member of.
-  -N  A name for your Agent.  Default uses the instance hostname.
+  -P  Port on which to connect to the Trend Micro Deep Security Manager server. 
+      Default is "4120".
+  -p  Policy ID with which to associate the new Trend Micro Deep Security agent
 EOT
 }  # ----------  end of function usage  ----------
 
@@ -108,13 +107,11 @@ EOT
 # Define default values
 RPM_URL=
 MGR_HOSTNAME=
-PORT="8834"
-AGENT_KEY=
-NESSUS_GROUPS=
-AGENT_NAME="$(hostname)"
+PORT="4120"
+POLICY_ID=
 
 # Parse command-line parameters
-while getopts :hU:H:P:K:G:N opt
+while getopts :hU:H:P:p opt
 do
     case "${opt}" in
         h)
@@ -130,14 +127,8 @@ do
         P)
             PORT="${OPTARG}"
             ;;
-        K)
-            AGENT_KEY="${OPTARG}"
-            ;;
-        G)
-            NESSUS_GROUPS="${OPTARG}"
-            ;;
-        N)
-            AGENT_NAME="${OPTARG}"
+        p)
+            POLICY_ID="${OPTARG}"
             ;;
         \?)
             usage
@@ -157,17 +148,7 @@ fi
 
 if [ -z "${MGR_HOSTNAME}" ]
 then
-    die "No MGR_HOSTNAME (-H) was provided, cannot link to Nessus Manager; exiting"
-fi
-
-if [ -z "${AGENT_KEY}" ]
-then
-    die "No AGENT_KEY (-K) was provided, cannot link  to Nessus Manager; exiting"
-fi
-
-if [ -n "${NESSUS_GROUPS}" ]
-then 
-    QUOTED_GROUPS=\"${NESSUS_GROUPS}\"
+    die "No MGR_HOSTNAME (-H) was provided, cannot link to Trend Manager; exiting"
 fi
 
 # Check Permissions
@@ -183,24 +164,22 @@ retry 2 yum -y install wget | log
 
 
 # Download Agent
-# Unable to automatically fetch agent from vendor because of license acceptance 
-# requirement
-# Agent installers are available at https://www.tenable.com/agent-download
-log "Downloading Nessus Agent RPM"
-retry 2 wget -O /root/nessusagent.rpm "${RPM_URL}" | log
+# Agent versions need to match the manager, so the RPM_URL should reflect a path
+# on the Trend Micro Deep Security Manager
+log "Downloading Trend Micro Deep Security Agent RPM"
+retry 2 ${RPM_URL} -O /root/trendagent.rpm --no-check-certificate --quiet | log
 
 
 # Install agent rpm
-log "Installing Nessus Agent RPM"
-rpm -ihv --replacepkgs /root/nessusagent.rpm
+log "Installing Trend Micro Deep Security Agent RPM"
+rpm -ihv --replacepkgs /root/trendagent.rpm | log
 sleep 5
 
 
-# Link to Nessus Manager
-log "Linking Nessus Agent to provided Nessus Manager"
-/opt/nessus_agent/sbin/nessuscli agent link --key=${AGENT_KEY} --name=${AGENT_NAME} --groups=${QUOTED_GROUPS} --host=${MGR_HOSTNAME} --port=${PORT}
+# Unregister agent from manager
+/opt/ds_agent/dsa_control -r | log
 
 
-# Start Agent service
-log "Starting Nessus Agent"
-/bin/systemctl start nessusagent.service
+# Link to Trend Micro Deep Security Manager
+log "Linking Trend Micro Deep Security Agent to provided Trend Micro Deep Security Manager"
+/opt/ds_agent/dsa_control -a dsm://${MGR_HOSTNAME}:${PORT}/ "policyid:${POLICY_ID}" --dsm-retry-interval 10 --max-dsm-retries 3 | log
