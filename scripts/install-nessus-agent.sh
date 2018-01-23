@@ -111,17 +111,17 @@ shift $((OPTIND-1))
 
 
 # Validate parameters
-if [ -n "${RPM_URL}" ]
+if [ -z "${RPM_URL}" ]
 then
         die "No RPM_URL (-U) was provided, cannot download agent RPM; exiting"
 fi
 
-if [ -n "${MGR_HOSTNAME}" ]
+if [ -z "${MGR_HOSTNAME}" ]
 then
         die "No MGR_HOSTNAME (-H) was provided, cannot link to Nessus Manager; exiting"
 fi
 
-if [ -n "${AGENT_KEY}" ]
+if [ -z "${AGENT_KEY}" ]
 then
         die "No AGENT_KEY (-K) was provided, cannot link  to Nessus Manager; exiting"
 fi
