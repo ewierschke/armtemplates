@@ -192,15 +192,15 @@ retry 2 wget -O /root/nessusagent.rpm "${RPM_URL}" | log
 
 # Install agent rpm
 log "Installing Nessus Agent RPM"
-rpm -ihv --replacepkgs /root/nessusagent.rpm
+rpm -ihv --replacepkgs /root/nessusagent.rpm | log
 sleep 5
 
 
 # Link to Nessus Manager
 log "Linking Nessus Agent to provided Nessus Manager"
-/opt/nessus_agent/sbin/nessuscli agent link --key=${AGENT_KEY} --name=${AGENT_NAME} --groups=${QUOTED_GROUPS} --host=${MGR_HOSTNAME} --port=${PORT}
+/opt/nessus_agent/sbin/nessuscli agent link --key=${AGENT_KEY} --name=${AGENT_NAME} --groups=${QUOTED_GROUPS} --host=${MGR_HOSTNAME} --port=${PORT} | log
 
 
 # Start Agent service
 log "Starting Nessus Agent"
-/bin/systemctl start nessusagent.service
+/bin/systemctl start nessusagent.service | log
