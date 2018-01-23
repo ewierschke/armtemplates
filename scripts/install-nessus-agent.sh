@@ -178,8 +178,9 @@ retry 2 yum -y install wget | log
 
 
 # Download Agent
-#       Unable to automatically fetch agent from vendor because of license acceptance requirement
-#       Agent installers are available at https://www.tenable.com/agent-download
+# Unable to automatically fetch agent from vendor because of license acceptance 
+# requirement
+# Agent installers are available at https://www.tenable.com/agent-download
 log "Downloading Nessus Agent RPM"
 retry 2 yum -y install wget | log
 retry 2 wget -O /root/nessusagent.rpm "${RPM_URL}" | log
