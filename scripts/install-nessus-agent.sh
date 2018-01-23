@@ -5,10 +5,25 @@
 #################################################################
 __ScriptName="install-nessus-agent.sh"
 
+set -e
+set -o pipefail
+
 log()
 {
-    logger -i -t "${__ScriptName}" -s -- "$1" 2> /dev/console
-    echo "$1"
+    # Logs messages to logger and stdout
+    # Reads log messages from $1 or stdin
+    if [[ "${1-UNDEF}" != "UNDEF" ]]
+    then
+        # Log message is $1
+        logger -i -t "${__SCRIPTNAME}" -s -- "$1" 2> /dev/console
+        echo "${__SCRIPTNAME}: $1"
+    else
+        # Log message is stdin
+        while IFS= read -r IN
+        do
+            log "$IN"
+        done
+    fi
 }  # ----------  end of function log  ----------
 
 
@@ -22,21 +37,45 @@ die()
 
 retry()
 {
+    # Make an arbitrary number of attempts to execute an arbitrary command,
+    # passing it arbitrary parameters. Convenient for working around
+    # intermittent errors (which occur often with poor repo mirrors).
+    #
+    # Returns the exit code of the command.
     local n=0
     local try=$1
-    local cmd="${@: 2}"
+    local cmd="${*: 2}"
+    local result=1
     [[ $# -le 1 ]] && {
-    echo "Usage $0 <number_of_retry_attempts> <Command>"; }
+        echo "Usage $0 <number_of_retry_attempts> <Command>"
+        exit $result
+    }
+
+    echo "Will try $try time(s) :: $cmd"
+
+    if [[ "${SHELLOPTS}" == *":errexit:"* ]]
+    then
+        set +e
+        local ERREXIT=1
+    fi
 
     until [[ $n -ge $try ]]
     do
-        $cmd && break || {
-            echo "Command Fail.."
+        sleep $n
+        $cmd
+        result=$?
+        test $result -eq 0 && break || {
             ((n++))
-            echo "retry $n ::"
-            sleep $n;
-            }
+            echo "Attempt $n, command failed :: $cmd"
+        }
     done
+
+    if [[ "${ERREXIT}" == "1" ]]
+    then
+        set -e
+    fi
+
+    return $result
 }  # ----------  end of function retry  ----------
 
 
@@ -135,15 +174,15 @@ fi
 
 
 #Install wget
-retry 2 yum -y install wget
+retry 2 yum -y install wget | log
 
 
 # Download Agent
 #       Unable to automatically fetch agent from vendor because of license acceptance requirement
 #       Agent installers are available at https://www.tenable.com/agent-download
 log "Downloading Nessus Agent RPM"
-retry 2 yum -y install wget
-retry 2 wget -O /root/nessusagent.rpm "${RPM_URL}"
+retry 2 yum -y install wget | log
+retry 2 wget -O /root/nessusagent.rpm "${RPM_URL}" | log
 
 
 # Install agent rpm
