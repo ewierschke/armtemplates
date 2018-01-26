@@ -169,7 +169,7 @@ retry 2 yum -y install wget | log
 # Agent versions need to match the manager, so the RPM_URL should reflect a path
 # on the Trend Micro Deep Security Manager
 log "Downloading Trend Micro Deep Security Agent RPM"
-retry 2 ${RPM_URL} -O /root/trendagent.rpm --no-check-certificate --quiet | log
+retry 2 wget ${RPM_URL} -O /root/trendagent.rpm --no-check-certificate --quiet | log
 
 
 # Install agent rpm
