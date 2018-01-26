@@ -110,8 +110,7 @@
       "type": "Microsoft.Network/loadBalancers",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses', 'public-ip')]",
-        "[resourceId('Microsoft.Network/virtualNetworks', parameters('networkSettings').virtualNetworkName)]"
+        "[resourceId('Microsoft.Network/publicIPAddresses', 'public-ip')]"
       ],
       "properties": {
         "frontendIPConfigurations": "[variables('feLoadBalancerConfig')]",
