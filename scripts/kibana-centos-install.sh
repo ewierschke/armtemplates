@@ -171,6 +171,7 @@ enabled=1" | tee /etc/yum.repos.d/kibana.repo
        
     # Watchmaker
     service firewalld start
+    chkconfig firewalld on
     firewall-cmd --zone=public --add-port=5601/tcp
     firewall-cmd --zone=public --permanent --add-port=5601/tcp
     (

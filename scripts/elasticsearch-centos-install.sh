@@ -545,6 +545,7 @@ mv name_synonyms.txt /etc/elasticsearch/name_synonyms.txt
 # STIG prep and watchmaker execution
 chown root:elasticsearch /etc/elasticsearch/elasticsearch.yml
 service firewalld start
+chkconfig firewalld on
 firewall-cmd --zone=public --permanent --add-port=9200/tcp
 firewall-cmd --zone=public --permanent --add-port=9300/tcp
 firewall-cmd --zone=public --permanent --add-port=9301/tcp
