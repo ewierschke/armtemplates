@@ -56,8 +56,8 @@ echo "Writing new /etc/httpd/conf.d/ssl.conf"
     printf "\n"
     printf "ProxyRequests Off\n"
     printf "ProxyPreserveHost On\n"
-    printf "ProxyPass / http://localhost:9200/\n"
-    printf "ProxyPassReverse / http://localhost:9200/\n"
+    printf "ProxyPass / http://client-vm0:9200/\n"
+    printf "ProxyPassReverse / http://client-vm0:9200/\n"
     printf "\n"
     printf "</VirtualHost>\n"
     printf "\n"
@@ -73,5 +73,7 @@ echo "Writing new /etc/httpd/conf.d/ssl.conf"
 ) > /etc/httpd/conf.d/ssl.conf
 chmod 644 /etc/httpd/conf.d/ssl.conf
 
+service httpd start
+chkconfig httpd on
 firewall-cmd --zone=public --permanent --add-port=443/tcp
 firewall-cmd --zone=public --add-port=443/tcp
