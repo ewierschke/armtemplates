@@ -1,6 +1,11 @@
 # Build self signed cert for use on apache httpd as proxy
 echo "Creating self-signed cert"
 yum -y install mod_ssl openssl httpd
+service httpd start
+chkconfig httpd on
+firewall-cmd --zone=public --permanent --add-port=443/tcp
+firewall-cmd --zone=public --add-port=443/tcp
+
 # Gotta make SELinux happy...
 if [[ $(getenforce) = "Enforcing" ]] || [[ $(getenforce) = "Permissive" ]]
 then
@@ -15,7 +20,7 @@ then
     fi
 fi
 
-
+#create cert
 cd /root/
 openssl req -nodes -sha256 -newkey rsa:2048 -keyout selfsigned.key -out selfsigned.csr -subj "/C=US/ST=ST/L=Loc/O=Org/OU=OU/CN=guac"
 openssl x509 -req -sha256 -days 365 -in selfsigned.csr -signkey selfsigned.key -out selfsigned.crt
@@ -73,7 +78,4 @@ echo "Writing new /etc/httpd/conf.d/ssl.conf"
 ) > /etc/httpd/conf.d/ssl.conf
 chmod 644 /etc/httpd/conf.d/ssl.conf
 
-service httpd start
-chkconfig httpd on
-firewall-cmd --zone=public --permanent --add-port=443/tcp
-firewall-cmd --zone=public --add-port=443/tcp
+systemctl enable httpd.service
