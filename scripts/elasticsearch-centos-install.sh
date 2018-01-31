@@ -560,6 +560,16 @@ firewall-cmd --zone=public --add-port=9302/tcp
 firewall-cmd --zone=public --add-port=9303/tcp
 firewall-cmd --zone=public --add-port=9304/tcp
 firewall-cmd --zone=public --add-port=9305/tcp
+
+#configure self signed ssl cert on httpd for proxy to client node
+if [ ${CLIENT_ONLY_NODE} -ne 0 ]; then
+    log "Configure client node for httpd self signed ssl proxy"
+    wget https://raw.githubusercontent.com/ewierschke/armtemplates/runwincustdata/scripts/clientnodeselfsigned.sh -O /root/clientnodeselfsigned.sh
+    chmod 777 /root/clientnodeselfsigned.sh
+    /root/clientnodeselfsigned.sh
+fi
+
+#create and schedule update file for yum and analysis-phonetic plugin
 (
     printf "yum -y update\n"
     printf "service elasticsearch stop\n"
@@ -568,8 +578,10 @@ firewall-cmd --zone=public --add-port=9305/tcp
     printf "shutdown -r now\n"
 ) > /root/update.sh
 chmod 777 /root/update.sh
+
 yum -y install at
-yum -y install epel-release && yum -y --enablerepo=epel install python-pip wget && pip install --upgrade pip setuptools watchmaker && watchmaker -n --log-level debug --log-dir=/var/log/watchmaker
+#execute watchmaker
+yum -y install epel-release && yum -y --enablerepo=epel install python-pip wget && pip install --upgrade pip setuptools watchmaker && watchmaker -n --log-level debug --log-dir=/var/log/watchmaker --config=/usr/lib/python2.7/site-packages/watchmaker/static/config.yaml
 sed -i_bak -e '/tmp/d' /etc/fstab
 at now + 2 minutes -f /root/update.sh
 
