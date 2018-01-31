@@ -115,6 +115,9 @@ enabled=1" | tee /etc/yum.repos.d/kibana.repo
         echo "elasticsearch.url: \"$ELASTICSEARCH_URL\"" >> /opt/kibana/config/kibana.yml
     fi
 
+    #added for use of self signed cert
+    echo "elasticsearch.ssl.verify: false" >> /opt/kibana/config/kibana.yml
+
     # install the marvel plugin for 2.x
     if [ ${INSTALL_MARVEL} -ne 0 ];
     then
