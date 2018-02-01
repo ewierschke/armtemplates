@@ -567,6 +567,7 @@ if [ ${CLIENT_ONLY_NODE} -ne 0 ]; then
     wget https://raw.githubusercontent.com/ewierschke/armtemplates/runwincustdata/scripts/clientnodeselfsigned.sh -O /root/clientnodeselfsigned.sh
     chmod 777 /root/clientnodeselfsigned.sh
     /root/clientnodeselfsigned.sh
+    systemctl enable httpd.service
 fi
 
 #create and schedule update file for yum and analysis-phonetic plugin
@@ -581,7 +582,8 @@ chmod 777 /root/update.sh
 
 yum -y install at
 #execute watchmaker
-yum -y install epel-release && yum -y --enablerepo=epel install python-pip wget && pip install --upgrade pip setuptools watchmaker && watchmaker -n --log-level debug --log-dir=/var/log/watchmaker --config=/usr/lib/python2.7/site-packages/watchmaker/static/config.yaml
+yum -y install epel-release && yum -y --enablerepo=epel install python-pip wget && pip install --upgrade pip setuptools watchmaker && watchmaker -n --log-level debug --log-dir=/var/log/watchmaker --config=/usr/lib/python2.7/site-packages/watchmaker/static/config.yaml 
+salt-call --local ash.fips_disable
 sed -i_bak -e '/tmp/d' /etc/fstab
 at now + 2 minutes -f /root/update.sh
 
