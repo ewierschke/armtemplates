@@ -30,6 +30,7 @@ cp selfsigned.csr /etc/pki/tls/private/
 # Configure Apache to use self signed cert
 mv /etc/httpd/conf.d/ssl.conf /etc/httpd/conf.d/ssl.conf.bak
 cd /etc/httpd/conf.d/
+myip=hostname -I
 echo "Writing new /etc/httpd/conf.d/ssl.conf"
 (
     printf "LoadModule ssl_module modules/mod_ssl.so\n"
@@ -61,8 +62,8 @@ echo "Writing new /etc/httpd/conf.d/ssl.conf"
     printf "\n"
     printf "ProxyRequests Off\n"
     printf "ProxyPreserveHost On\n"
-    printf "ProxyPass / http://client-vm0:9200/\n"
-    printf "ProxyPassReverse / http://client-vm0:9200/\n"
+    printf "ProxyPass / http://"${myip}":9200/\n"
+    printf "ProxyPassReverse / http://"${myip}"client-vm0:9200/\n"
     printf "\n"
     printf "</VirtualHost>\n"
     printf "\n"
@@ -78,4 +79,4 @@ echo "Writing new /etc/httpd/conf.d/ssl.conf"
 ) > /etc/httpd/conf.d/ssl.conf
 chmod 644 /etc/httpd/conf.d/ssl.conf
 
-systemctl enable httpd.service
+systemctl enable httpd
