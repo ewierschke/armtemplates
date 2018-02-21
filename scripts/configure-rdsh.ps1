@@ -279,22 +279,27 @@ if ($PSVersionTable.psversion.major -ge 4) {
 } else {
     invoke-expression "& $env:systemroot\system32\schtasks.exe /create /SC ONLOGON /RL HIGHEST /NP /V1 /RU SYSTEM /F /TR `"msg * /SERVER:%computername% ${msg}`" /TN `"${taskname}`"" 2>&1 | log -LogTag ${ScriptName}
 }
-$Computer = $env:COMPUTERNAME;
-$UsernameFilePath = "${credspath}\lcladminname.txt";
-$Username = Get-Content $UsernameFilePath;
-$LclAdminCredsFilePath = "${credspath}\lcladminpass.txt";
-$LclAdminKeyFilePath = "${credspath}\lcladminkey.txt";
-$LclAdminKey = Get-Content $LclAdminKeyFilePath;
-$LclAdminPass = Get-Content $LclAdminCredsFilePath;
-$SecPassword = $LclAdminPass | ConvertTo-SecureString -Key $LclAdminKey;
-$BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecPassword);
-$adminpass = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR);
-Set-ScheduledTask -User "$Computer\$Username" -Password $adminpass -TaskName $taskname;
-#todo-add test for failure... if failure disable task, only remote-items if success
-log -LogTag ${ScriptName} "deleting creds"
-Remove-Item "${credspath}\lcladminpass.txt" -Force -Recurse;
-Remove-Item "${credspath}\lcladminkey.txt" -Force -Recurse;
-Remove-Item "${credspath}\lcladminname.txt" -Force -Recurse;
+
+# Check for existence of creds files and adjust scheduled task to run as supplied credentials (holdover from old approach)
+$testPath = "${credspath}\lcladminname.txt";
+if (Test-Path $testPath -PathType Leaf) {
+    $Computer = $env:COMPUTERNAME;
+    $UsernameFilePath = "${credspath}\lcladminname.txt";
+    $Username = Get-Content $UsernameFilePath;
+    $LclAdminCredsFilePath = "${credspath}\lcladminpass.txt";
+    $LclAdminKeyFilePath = "${credspath}\lcladminkey.txt";
+    $LclAdminKey = Get-Content $LclAdminKeyFilePath;
+    $LclAdminPass = Get-Content $LclAdminCredsFilePath;
+    $SecPassword = $LclAdminPass | ConvertTo-SecureString -Key $LclAdminKey;
+    $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecPassword);
+    $adminpass = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR);
+    Set-ScheduledTask -User "$Computer\$Username" -Password $adminpass -TaskName $taskname;
+    #todo-add test for failure... if failure disable task, only remove-items if success
+    log -LogTag ${ScriptName} "deleting creds"
+    Remove-Item "${credspath}\lcladminpass.txt" -Force -Recurse;
+    Remove-Item "${credspath}\lcladminkey.txt" -Force -Recurse;
+    Remove-Item "${credspath}\lcladminname.txt" -Force -Recurse;
+}
 
 log -LogTag ${ScriptName} "Rebooting"
 powershell.exe "Restart-Computer -Force -Verbose";

@@ -114,9 +114,13 @@ Invoke-Webrequest "https://raw.githubusercontent.com/ewierschke/armtemplates/run
 log -LogTag ${ScriptName} "Installing RDSH features"
 powershell.exe "Install-WindowsFeature RDS-RD-Server,RDS-Licensing -Verbose";
 
-# Remove previous scheduled task
-log -LogTag ${ScriptName} "UnRegistering previous scheduled task"
-Unregister-ScheduledTask -TaskName "RunNextScript" -Confirm:$false;
+# Remove previous scheduled task (if it exists)
+log -LogTag ${ScriptName} "Unregistering previous scheduled task"
+$taskName = "RunNextScript";
+$taskExists = Get-ScheduledTask | Where-Object {$_.TaskName -like $taskName}
+if ($taskExists) {
+    Unregister-ScheduledTask -TaskName ${taskName} -Confirm:$false;
+}
 
 #Create an atlogon scheduled task to run next script
 log -LogTag ${ScriptName} "Registering a scheduled task at startup to run the next script"
