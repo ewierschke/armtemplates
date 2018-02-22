@@ -6,6 +6,10 @@ $nextscript = "firstrdsh"
 # Create the ScheduleNextScript log directory
 New-Item -Path $ScheduleNextScriptDir -ItemType "directory" -Force 2>&1 > $null
 
+#open IE to initialize cert
+$ie = new-object -com "InternetExplorer.Application"
+$ie.navigate("https://raw.githubusercontent.com/")
+
 # Get the next script
 $Stoploop = $false
 [int]$Retrycount = "0"
@@ -19,6 +23,7 @@ do {
         if ($Retrycount -gt 3){
             Write-Host "Could not download next script after 3 retrys."
             $Stoploop = $true
+            exit 1
         }
         else {
             Write-Host "Could not download next script retrying in 30 seconds..."
