@@ -8,7 +8,11 @@ param (
 )
 
 # Remove previous scheduled task
-Unregister-ScheduledTask -TaskName "RunNextScript" -Confirm:$false;
+$taskName = "RunNextScript";
+$taskExists = Get-ScheduledTask | Where-Object {$_.TaskName -like $taskName}
+if ($taskExists) {
+    Unregister-ScheduledTask -TaskName ${taskName} -Confirm:$false;
+}
 
 #Install Updates
 . { iwr -useb http://boxstarter.org/bootstrapper.ps1 } | iex; get-boxstarter -Force
