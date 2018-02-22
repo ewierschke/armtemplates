@@ -7,6 +7,7 @@ $nextscript = "firstrdsh"
 New-Item -Path $ScheduleNextScriptDir -ItemType "directory" -Force 2>&1 > $null
 
 #open IE to initialize cert
+Start-Sleep -s 3
 $ie = new-object -com "InternetExplorer.Application"
 $ie.navigate("https://raw.githubusercontent.com/")
 
@@ -47,3 +48,5 @@ if ($PSVersionTable.psversion.major -ge 4) {
     invoke-expression "& $env:systemroot\system32\schtasks.exe /create /SC ONLOGON /RL HIGHEST /NP /V1 /RU SYSTEM /F /TR `"msg * /SERVER:%computername% ${msg}`" /TN `"${taskname}`"" 2>&1
 }
 
+Start-Sleep -s 300
+powershell.exe "Restart-Computer -Force -Verbose";
