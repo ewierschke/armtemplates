@@ -7,7 +7,27 @@ $nextscript = "firstrdsh"
 New-Item -Path $ScheduleNextScriptDir -ItemType "directory" -Force 2>&1 > $null
 
 # Get the next script
-Invoke-Webrequest "https://raw.githubusercontent.com/ewierschke/armtemplates/runwincustdata/scripts/${nextscript}.ps1" -Outfile "${ScheduleNextScriptDir}\${nextscript}.ps1";
+$Stoploop = $false
+[int]$Retrycount = "0"
+do {
+    try {
+        Invoke-Webrequest "https://raw.githubusercontent.com/ewierschke/armtemplates/runwincustdata/scripts/${nextscript}.ps1" -Outfile "${ScheduleNextScriptDir}\${nextscript}.ps1";
+        Write-Host "Downloaded next script"
+        $Stoploop = $true
+        }
+    catch {
+        if ($Retrycount -gt 3){
+            Write-Host "Could not download next script after 3 retrys."
+            $Stoploop = $true
+        }
+        else {
+            Write-Host "Could not download next script retrying in 30 seconds..."
+            Start-Sleep -Seconds 30
+            $Retrycount = $Retrycount + 1
+        }
+    }
+}
+While ($Stoploop -eq $false)
 
 #Create an atlogon scheduled task to run next script
 $taskname = "RunNextScript"
