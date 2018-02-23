@@ -15,9 +15,9 @@ if ($taskExists) {
 }
 
 #Install Updates
-. { iwr -useb http://boxstarter.org/bootstrapper.ps1 } | iex; get-boxstarter -Force
-Enable-MicrosoftUpdate
-Install-WindowsUpdate -SuppressReboots -AcceptEula
+#. { iwr -useb http://boxstarter.org/bootstrapper.ps1 } | iex; get-boxstarter -Force
+#Enable-MicrosoftUpdate
+#Install-WindowsUpdate -SuppressReboots -AcceptEula
 
 #open IE to initialize cert
 $ie = new-object -com "InternetExplorer.Application"

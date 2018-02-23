@@ -256,9 +256,9 @@ $SignOffShortcut.Save()
 #(new-object Net.WebClient).DownloadString("http://psget.net/GetPsGet.ps1") | iex
 
 #Install updates
-. { iwr -useb http://boxstarter.org/bootstrapper.ps1 } | iex; get-boxstarter -Force
-Enable-MicrosoftUpdate
-Install-WindowsUpdate -SuppressReboots -AcceptEula
+#. { iwr -useb http://boxstarter.org/bootstrapper.ps1 } | iex; get-boxstarter -Force
+#Enable-MicrosoftUpdate
+#Install-WindowsUpdate -SuppressReboots -AcceptEula
 
 # Remove previous scheduled task
 log -LogTag ${ScriptName} "UnRegistering previous scheduled task"
