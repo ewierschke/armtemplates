@@ -32,18 +32,33 @@ $PypiUrl = "https://pypi.org/simple"
 # Download bootstrap file
 $BootstrapFile = "${Env:Temp}\$(${BootstrapUrl}.split('/')[-1])"
 (New-Object System.Net.WebClient).DownloadFile("$BootstrapUrl", "$BootstrapFile")
-LogWrite "Post bootstrap download"
+
 # Install python
 $params = "`"$BootstrapFile`" -PythonUrl `"$PythonUrl`" -Verbose -ErrorAction Stop"
 Start-Process powershell -Argument $params -NoNewWindow -Wait
-#& "$BootstrapFile" -PythonUrl "$PythonUrl" -Verbose -ErrorAction Stop
+$env:Path = "$env:Path;$env:ProgramFiles\Python36\Scripts\;$env:ProgramFiles\Python36\"
 
 # Install watchmaker
-pip install --index-url="$PypiUrl" --upgrade pip setuptools watchmaker
-LogWrite "Post pip install"
+pip install --build "${Env:windir}\Temp" --index-url="$PypiUrl" --upgrade pip setuptools watchmaker
+
 # Run watchmaker
-watchmaker --no-reboot --log-level debug --log-dir=C:\Watchmaker\Logs ${WatchmakerParam} ${WatchmakerParam2}
-LogWrite "Post wam execute"
+watchmaker --log-level debug --log-dir=C:\Watchmaker\Logs
+
+# Download bootstrap file
+#$BootstrapFile = "${Env:Temp}\$(${BootstrapUrl}.split('/')[-1])"
+#(New-Object System.Net.WebClient).DownloadFile("$BootstrapUrl", "$BootstrapFile")
+#LogWrite "Post bootstrap download"
+## Install python
+#$params = "`"$BootstrapFile`" -PythonUrl `"$PythonUrl`" -Verbose -ErrorAction Stop"
+#Start-Process powershell -Argument $params -NoNewWindow -Wait
+##& "$BootstrapFile" -PythonUrl "$PythonUrl" -Verbose -ErrorAction Stop
+
+## Install watchmaker
+#pip install --index-url="$PypiUrl" --upgrade pip setuptools watchmaker
+#LogWrite "Post pip install"
+## Run watchmaker
+#watchmaker --no-reboot --log-level debug --log-dir=C:\Watchmaker\Logs ${WatchmakerParam} ${WatchmakerParam2}
+#LogWrite "Post wam execute"
 gpupdate /force
 
 # Remove previous scheduled task
