@@ -34,15 +34,16 @@ $BootstrapFile = "${Env:Temp}\$(${BootstrapUrl}.split('/')[-1])"
 (New-Object System.Net.WebClient).DownloadFile("$BootstrapUrl", "$BootstrapFile")
 
 # Install python
-$params = "`"$BootstrapFile`" -PythonUrl `"$PythonUrl`" -Verbose -ErrorAction Stop"
-Start-Process powershell -Argument $params -NoNewWindow -Wait
-$env:Path = "$env:Path;$env:ProgramFiles\Python36\Scripts\;$env:ProgramFiles\Python36\"
+& "$BootstrapFile" -PythonUrl "$PythonUrl" -Verbose -ErrorAction Stop
+#$params = "`"$BootstrapFile`" -PythonUrl `"$PythonUrl`" -Verbose -ErrorAction Stop"
+#Start-Process powershell -Argument $params -NoNewWindow -Wait
+#$env:Path = "$env:Path;$env:ProgramFiles\Python36\Scripts\;$env:ProgramFiles\Python36\"
 
 # Install watchmaker
-pip install --build "${Env:windir}\Temp" --index-url="$PypiUrl" --upgrade pip setuptools watchmaker
+pip install --build "${Env:Temp}" --index-url="$PypiUrl" --upgrade pip setuptools watchmaker
 
 # Run watchmaker
-watchmaker --log-level debug --log-dir=C:\Watchmaker\Logs
+watchmaker --no-reboot --log-level debug --log-dir=C:\Watchmaker\Logs ${WatchmakerParam} ${WatchmakerParam2}
 
 # Download bootstrap file
 #$BootstrapFile = "${Env:Temp}\$(${BootstrapUrl}.split('/')[-1])"
