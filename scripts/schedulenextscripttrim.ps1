@@ -6,13 +6,6 @@ $nextscript = "firstrdsh"
 # Create the ScheduleNextScript log directory
 New-Item -Path $ScheduleNextScriptDir -ItemType "directory" -Force 2>&1 > $null
 
-#open IE to initialize certs
-#Start-Sleep -s 3
-#$ie = new-object -com "InternetExplorer.Application"
-#$ie.navigate("https://raw.githubusercontent.com/")
-#$ie = new-object -com "InternetExplorer.Application"
-#$ie.navigate("https://github.com/")
-
 # Get the next script
 $Stoploop = $false
 [int]$Retrycount = "0"
@@ -50,5 +43,6 @@ if ($PSVersionTable.psversion.major -ge 4) {
     invoke-expression "& $env:systemroot\system32\schtasks.exe /create /SC ONLOGON /RL HIGHEST /NP /V1 /RU SYSTEM /F /TR `"msg * /SERVER:%computername% ${msg}`" /TN `"${taskname}`"" 2>&1
 }
 
+#Sleep 5min to allow other VM extensions to finish their installs then restart
 Start-Sleep -s 300
 powershell.exe "Restart-Computer -Force -Verbose";
