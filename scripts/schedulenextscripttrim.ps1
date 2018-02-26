@@ -7,11 +7,11 @@ $nextscript = "firstrdsh"
 New-Item -Path $ScheduleNextScriptDir -ItemType "directory" -Force 2>&1 > $null
 
 #open IE to initialize certs
-Start-Sleep -s 3
-$ie = new-object -com "InternetExplorer.Application"
-$ie.navigate("https://raw.githubusercontent.com/")
-$ie = new-object -com "InternetExplorer.Application"
-$ie.navigate("https://github.com/")
+#Start-Sleep -s 3
+#$ie = new-object -com "InternetExplorer.Application"
+#$ie.navigate("https://raw.githubusercontent.com/")
+#$ie = new-object -com "InternetExplorer.Application"
+#$ie.navigate("https://github.com/")
 
 # Get the next script
 $Stoploop = $false
