@@ -33,13 +33,19 @@ pip install --build "${Env:Temp}" --index-url="$PypiUrl" --upgrade pip setuptool
 # Run watchmaker
 watchmaker --no-reboot --log-level debug --log-dir=C:\Watchmaker\Logs ${WatchmakerParam} ${WatchmakerParam2}
 
-gpupdate /force
-
-# Remove previous scheduled task
-$taskName = "RunNextScript";
-$taskExists = Get-ScheduledTask | Where-Object {$_.TaskName -like $taskName}
-if ($taskExists) {
-    Unregister-ScheduledTask -TaskName ${taskName} -Confirm:$false;
+if ($? -ne 'True') {
+    $text = "Watchmaker failed to run: $(Get-Date)"
+    $text | Out-File $env:windir\Temp\wamfailed.log
+    Start-Sleep -s 60
+} else {
+    # Remove previous scheduled task
+    $taskName = "RunNextScript";
+    $taskExists = Get-ScheduledTask | Where-Object {$_.TaskName -like $taskName}
+    if ($taskExists) {
+        Unregister-ScheduledTask -TaskName ${taskName} -Confirm:$false;
+    }
 }
+
+gpupdate /force
 
 powershell.exe "Restart-Computer -Force -Verbose";
