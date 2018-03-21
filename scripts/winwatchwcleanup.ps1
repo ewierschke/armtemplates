@@ -39,6 +39,9 @@ if ($? -ne 'True') {
     $text | Out-File -Encoding ASCII -Append -FilePath $logfilepath
     Start-Sleep -s 60
 } else {
+    $logfilepath = "${env:windir}\Temp\winwatchwcleanup-log.log"
+    $text = "Watchmaker succeeded: $(Get-Date)"
+    $text | Out-File -Encoding ASCII -Append -FilePath $logfilepath
     # Remove previous scheduled task
     $taskName = "RunNextScript";
     $taskExists = Get-ScheduledTask | Where-Object {$_.TaskName -like $taskName}
