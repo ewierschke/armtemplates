@@ -1,7 +1,8 @@
-#Create control file to prevent multiple executions
+# Set control file path to be used to prevent multiple executions via custom script extension
 $ctrlfilepath = "${env:windir}\Temp\schedulenextscripttrim-control.log"
 
 if ( -not (Test-Path $ctrlfilepath -PathType Leaf)) {
+    # Log start time
     $text = "schedulenextscripttrim.ps1 started at: $(Get-Date)"
     $text | Out-File -Encoding ASCII -Append -FilePath $ctrlfilepath
     # Define System variables
@@ -36,7 +37,7 @@ if ( -not (Test-Path $ctrlfilepath -PathType Leaf)) {
     }
     While ($Stoploop -eq $false)
 
-    #Create an atlogon scheduled task to run next script
+    # Create an atlogon scheduled task to run next script
     $taskname = "RunNextScript"
     if ($PSVersionTable.psversion.major -ge 4) {
         $A = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-ExecutionPolicy Bypass ${ScheduleNextScriptDir}\${nextscript}.ps1"
@@ -49,9 +50,15 @@ if ( -not (Test-Path $ctrlfilepath -PathType Leaf)) {
         invoke-expression "& $env:systemroot\system32\schtasks.exe /create /SC ONLOGON /RL HIGHEST /NP /V1 /RU SYSTEM /F /TR `"msg * /SERVER:%computername% ${msg}`" /TN `"${taskname}`"" 2>&1
     }
 
-    #Sleep 5min to allow other VM extensions to finish their installs then restart
+    # Sleep 5min to allow other VM extensions to finish their installs
     Start-Sleep -s 300
+    # Log completion time
     $text = "schedulenextscripttrim.ps1 ended with a reboot at: $(Get-Date)"
     $text | Out-File -Encoding ASCII -Append -FilePath $ctrlfilepath
+    # Restart
     powershell.exe "Restart-Computer -Force -Verbose";
+} else {
+    $logfilepath = "${env:windir}\Temp\schedulenextscripttrim-log.log"
+    $text = "schedulenextscripttrim.ps1 has already executed and attempted to execute again at: $(Get-Date)"
+    $text | Out-File -Encoding ASCII -Append -FilePath $logfilepath
 }
