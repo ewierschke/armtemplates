@@ -34,8 +34,9 @@ pip install --build "${Env:Temp}" --index-url="$PypiUrl" --upgrade pip setuptool
 watchmaker --no-reboot --log-level debug --log-dir=C:\Watchmaker\Logs ${WatchmakerParam} ${WatchmakerParam2}
 
 if ($? -ne 'True') {
+    $logfilepath = "${env:windir}\Temp\winwatchwcleanup-log.log"
     $text = "Watchmaker failed to run: $(Get-Date)"
-    $text | Out-File $env:windir\Temp\wamfailed.log
+    $text | Out-File -Encoding ASCII -Append -FilePath $logfilepath
     Start-Sleep -s 60
 } else {
     # Remove previous scheduled task
