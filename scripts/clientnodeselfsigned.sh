@@ -22,7 +22,7 @@ fi
 
 #create cert
 cd /root/
-openssl req -nodes -sha256 -newkey rsa:2048 -keyout selfsigned.key -out selfsigned.csr -subj "/C=US/ST=ST/L=Loc/O=Org/OU=OU/CN=guac"
+openssl req -nodes -sha256 -newkey rsa:2048 -keyout selfsigned.key -out selfsigned.csr -subj "/C=US/ST=ST/L=Loc/O=Org/OU=OU/CN=client"
 openssl x509 -req -sha256 -days 365 -in selfsigned.csr -signkey selfsigned.key -out selfsigned.crt
 cp selfsigned.crt /etc/pki/tls/certs/
 cp selfsigned.key /etc/pki/tls/private/
