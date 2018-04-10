@@ -66,7 +66,7 @@
       "name": "[variables('storageAccountNameShared')]",
       "apiVersion": "2016-01-01",
       "sku": {
-        "name": "Premium_LRS"
+        "name": "Standard_LRS"
       },
       "kind": "Storage",
       "location": "[resourceGroup().location]"
@@ -76,7 +76,7 @@
       "name": "[variables('storageAccountNameAFS')]",
       "apiVersion": "2016-01-01",
       "sku": {
-        "name": "Premium_LRS"
+        "name": "Standard_LRS"
       },
       "kind": "Storage",
       "location": "[resourceGroup().location]"
