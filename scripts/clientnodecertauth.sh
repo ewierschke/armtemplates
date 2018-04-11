@@ -8,7 +8,7 @@ cp app1.pem /etc/pki/tls/certs/
 
 # Configure Apache to require app1 cert
 echo "Configuring Apache HTTP for cert auth"
-mv /etc/httpd/conf.d/ssl.conf /etc/httpd/conf.d/ssl.conf.authbak
+cp /etc/httpd/conf.d/ssl.conf /etc/httpd/conf.d/ssl.conf.authbak
 cd /etc/httpd/conf.d/
 
 #add app1.pem as httpd trusted ca
@@ -22,6 +22,6 @@ sed -i 's|</VirtualHost>|SSLVerifyClient require\nSSLVerifyDepth 1\n</VirtualHos
 service httpd restart
 
 #create p12
-openssl pkcs12 -export -in /root/app1.pem -inkey /root/app1.key -out /root/app1.p12
+openssl pkcs12 -export -in /root/app1.pem -inkey /root/app1.key -out /root/app1.p12 pass:changeit
 
 #upload p12 to app svc?
