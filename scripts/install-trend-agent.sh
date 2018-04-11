@@ -87,11 +87,8 @@ usage()
   Usage:  ${__ScriptName} [options]
 
   Note:
-  If no options are specified, then Guacamole v${__GuacVersion} will be
-  installed, but it will not be configured and users will not be able to
-  authenticate. Specify -H (and associated options) to configure LDAP
-  authentication. Specify -G (and associated options) to configure file-based
-  authentication.
+  If no options are specified, then Trend Micro Deep Security Manager will not 
+  be configured.
 
   Options:
   -h  Display this message.
@@ -113,7 +110,7 @@ PORT="4120"
 POLICY_ID=
 
 # Parse command-line parameters
-while getopts :hU:H:P:p opt
+while getopts :hU:H:P:p: opt
 do
     case "${opt}" in
         h)

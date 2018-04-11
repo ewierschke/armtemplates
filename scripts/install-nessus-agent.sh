@@ -85,11 +85,7 @@ usage()
   Usage:  ${__ScriptName} [options]
 
   Note:
-  If no options are specified, then Guacamole v${__GuacVersion} will be
-  installed, but it will not be configured and users will not be able to
-  authenticate. Specify -H (and associated options) to configure LDAP
-  authentication. Specify -G (and associated options) to configure file-based
-  authentication.
+  If no options are specified, then Nessus agent will not be configured.
 
   Options:
   -h  Display this message.
@@ -114,7 +110,7 @@ NESSUS_GROUPS=
 AGENT_NAME="$(hostname)"
 
 # Parse command-line parameters
-while getopts :hU:H:P:K:G:N opt
+while getopts :hU:H:P:K:G:N: opt
 do
     case "${opt}" in
         h)
