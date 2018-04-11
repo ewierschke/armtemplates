@@ -569,7 +569,7 @@ firewall-cmd --zone=public --add-port=9305/tcp
     printf "/usr/share/elasticsearch/bin/plugin install analysis-phonetic\n"
     printf "shutdown -r now\n"
 ) > /root/update.sh
-chmod 777 /root/update.sh
+chmod 755 /root/update.sh
 
 yum -y install at
 #execute watchmaker
@@ -577,10 +577,14 @@ yum -y install epel-release && yum -y --enablerepo=epel install python-pip wget 
 salt-call --local ash.fips_disable
 #configure self signed ssl cert on httpd for proxy to client node
 if [ ${CLIENT_ONLY_NODE} -ne 0 ]; then
-    log "Configure client node for httpd self signed ssl proxy"
-    wget https://raw.githubusercontent.com/ewierschke/armtemplates/runwincustdata/scripts/clientnodeselfsigned.sh -O /root/clientnodeselfsigned.sh
-    chmod 777 /root/clientnodeselfsigned.sh
-    /root/clientnodeselfsigned.sh
+    log "Configure client node for httpd self signed ssl reverse proxy"
+    wget https://raw.githubusercontent.com/ewierschke/armtemplates/runwincustdata/scripts/httpdrevproxyselfsigned.sh -O /root/httpdrevproxyselfsigned.sh
+    chmod 755 /root/httpdrevproxyselfsigned.sh
+    /root/httpdrevproxyselfsigned.sh -P 9200
+    log "Configure client node httpd for certificate authentication"
+    wget https://raw.githubusercontent.com/ewierschke/armtemplates/runwincustdata/scripts/clientnodecertauth.sh -O /root/clientnodecertauth.sh
+    chmod 755 /root/clientnodecertauth.sh
+    /root/clientnodecertauth.sh
     systemctl enable httpd
 fi
 sed -i_bak -e '/tmp/d' /etc/fstab
