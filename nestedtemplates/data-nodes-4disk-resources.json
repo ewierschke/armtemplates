@@ -54,7 +54,7 @@
     },
     "dataDiskSize": {
       "type": "int",
-      "defaultValue": 1023,
+      "defaultValue": 255,
       "metadata": {
         "description": "Size of each data disk attached to data nodes in (Gb)"
       }
