@@ -22,6 +22,6 @@ sed -i 's|</VirtualHost>|SSLVerifyClient require\nSSLVerifyDepth 1\n</VirtualHos
 service httpd restart
 
 #create p12
-openssl pkcs12 -export -in /root/app1.pem -inkey /root/app1.key -out /root/app1.p12 pass:changeit
+openssl pkcs12 -export -in /root/app1.pem -inkey /root/app1.key -out /root/app1.p12 -password pass:changeit
 
 #upload p12 to app svc?
