@@ -9,7 +9,7 @@ log()
 die()
 {
     [ -n "$1" ] && log "$1"
-    log "httpd config failed"'!'
+    log "httpd ldaps config failed"'!'
     exit 1
 }  # ----------  end of function die  ----------
 
@@ -46,7 +46,7 @@ usage()
   -C  URL from which to download LDAP server public certificate to be added to 
       HTTPD configuration for LDAPS authentication.
   -E  URL from which to download environment specific content zip file.
-  -L  DN of the LDAP group to allow access to HTTPD
+  -G  DN of the LDAP group to allow access to HTTPD
 EOT
 }  # ----------  end of function usage  ----------
 
@@ -57,7 +57,7 @@ ENV_CONTENT_URL=
 LDAP_GROUP_DN=
 
 # Parse command-line parameters
-while getopts :h:P:E:L: opt
+while getopts :h:C:E:G: opt
 do
     case "${opt}" in
         h)
@@ -70,7 +70,7 @@ do
         E)
             ENV_CONTENT_URL="${OPTARG}"
             ;;
-        L)
+        G)
             LDAP_GROUP_DN="${OPTARG}"
             ;;
         \?)
@@ -138,7 +138,7 @@ fulldn=dc=${dn}
 #adjust httpd config
 log "Configuring Apache HTTP for cert auth"
 yum -y install mod_ldap
-cp /etc/httpd/conf.d/ssl.conf /etc/httpd/conf.d/ssl.conf.authbak
+cp /etc/httpd/conf.d/ssl.conf /etc/httpd/conf.d/ssl.conf.preauthbak
 cd /etc/httpd/conf.d/
 
 #add ldap cert as httpd trusted globalcert
