@@ -181,7 +181,7 @@ then
 fi
 if [ -z "${clearpass}" ]
 then
-    echo "clearpass var didn't popsulate check content.zip contents and proper execution of join-trim"
+    echo "clearpass var didn't populate check content.zip contents and proper execution of join-trim"
     exit 1
 fi
 
@@ -205,7 +205,7 @@ sed -i "s|<user>|${user}|" /etc/httpd/conf.d/ssl.conf
 sed -i "s|<password>|${clearpass}|" /etc/httpd/conf.d/ssl.conf
 sed -i "s|<groupfulldn>|${LDAP_GROUP_DN}|" /etc/httpd/conf.d/ssl.conf
 
-## conf file syntax must be correct, cert file has to exist, module has to be installed for successfull restart
+## conf file syntax must be correct, cert file has to exist, module has to be installed for successful restart
 #restart httpd
 service httpd restart
 
