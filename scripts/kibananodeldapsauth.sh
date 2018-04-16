@@ -1,4 +1,15 @@
+#!/bin/bash
+# Description:
+# Configure HTTPD on CentOS 7 for LDAPS based authentication
+# Requires URL to credential file containing properly yaml formatted content,
+#  public certificate of LDAP server in order to make LDAPS/636 connection
+#  and DN of an LDAP group to be granted access to HTTPD
+# Pulls domain name from executing servers' network settings
+#################################################################
 __ScriptName="kibananodeldapsauth.sh"
+
+set -e
+set -o pipefail
 
 log()
 {
@@ -39,7 +50,8 @@ usage()
 
   Note:
   If no options are specified, HTTPD cannot be configured for ldaps auth. This 
-  script assumes previous execution of httpdrevproxyselfsigned.sh
+  script assumes previous execution of httpdrevproxyselfsigned.sh and should not
+  be run twice in a row without first re-reunning httpdrevproxyselfsigned.sh
 
   Options:
   -h  Display this message.
@@ -85,7 +97,17 @@ shift $((OPTIND-1))
 # Validate parameters
 if [ -z "${LDAPS_CERT}" ]
 then
-    echo "No LDAPS_CERT (-c) was provided, can't configure HTTPD for LDAPS auth"
+    echo "No LDAPS_CERT (-C) was provided, can't configure HTTPD for LDAPS auth"
+    exit 1
+fi
+if [ -z "${ENV_CONTENT_URL}" ]
+then
+    echo "No ENV_CONTENT_URL (-E) was provided, can't configure HTTPD for LDAPS auth"
+    exit 1
+fi
+if [ -z "${LDAP_GROUP_DN}" ]
+then
+    echo "No LDAP_GROUP_DN (-G) was provided, can't configure HTTPD for LDAPS auth"
     exit 1
 fi
 
@@ -108,7 +130,7 @@ chmod 755 /root/join-trim.sh
 retry 5 wget --timeout=10 \
     "${ENV_CONTENT_URL}" -O /root/content.zip|| \
     die "Could not download ldap cert"
-unzip /root/content.zip -d /root
+unzip -o /root/content.zip -d /root
 
 #get content into variables
 yum -y install epel-release
@@ -124,6 +146,7 @@ user=$(jq '.username' /root/env.json)
 user=$(sed -e 's/^"//' -e 's/"$//' <<<"$user")
 
 #get current suffix from network
+## need to validate against system handed multiple IP4.DOMAIN entries
 yum -y install bind-utils
 domain=$(nmcli dev show | grep DOMAIN | awk '{print $2}')
 dcarray=($(host -t srv _ldap._tcp.${domain} | awk '{print $8}'))
@@ -135,6 +158,33 @@ fulldn=dc=${dn}
 
 #to-do add check to validate LDAP_GROUP_DN against dn of domain
 
+#validate variables populated from env and content.zip
+if [ -z "${dc1}" ]
+then
+    echo "dc1 var didn't populate check for dns suffix in nmcli output and ad zones"
+    exit 1
+fi
+if [ -z "${dc2}" ]
+then
+    echo "dc2 var didn't populate check for dns suffix in nmcli output and ad zones"
+    exit 1
+fi
+if [ -z "${fulldn}" ]
+then
+    echo "fulldn var didn't populate check for dns suffix in nmcli output and appropriate conversion to dn"
+    exit 1
+fi
+if [ -z "${user}" ]
+then
+    echo "user var didn't populate check content.zip contents"
+    exit 1
+fi
+if [ -z "${clearpass}" ]
+then
+    echo "clearpass var didn't popsulate check content.zip contents and proper execution of join-trim"
+    exit 1
+fi
+
 #adjust httpd config
 log "Configuring Apache HTTP for cert auth"
 yum -y install mod_ldap
@@ -144,20 +194,18 @@ cd /etc/httpd/conf.d/
 #add ldap cert as httpd trusted globalcert
 sed -i 's|LoadModule ssl_module modules/mod_ssl.so|LoadModule ssl_module modules/mod_ssl.so\n\nLDAPVerifyServerCert off\nLDAPTrustedMode SSL\nLDAPTrustedGlobalCert CA_BASE64 /etc/pki/tls/certs/envCA.cer\n|' /etc/httpd/conf.d/ssl.conf
 
-#add virtualhost settings and auth requiring app1 cn
-sed -i 's|</VirtualHost>|</VirtualHost>\n\n<Location "/">\nAuthName "AD authentication"\nAuthBasicProvider ldap\nAuthType Basic\nAuthLDAPGroupAttribute member\nAuthLDAPGroupAttributeIsDN On\nAuthLDAPURL ldaps://<dc1>:636/<fulldn>?sAMAccountName?sub?(objectClass=*)\nAuthLDAPURL ldaps://<dc2>:636/<fulldn>?sAMAccountName?sub?(objectClass=*)\nAuthLDAPBindDN <user><fulldn>\nAuthLDAPBindPassword <password>\nrequire ldap-group <groupfulldn>\n</Location>\n|' /etc/httpd/conf.d/ssl.conf
+#add location section requiring membership in ldap group to auth
+sed -i 's|</VirtualHost>|</VirtualHost>\n\n<Location "/">\nAuthName "AD authentication"\nAuthBasicProvider ldap\nAuthType Basic\nAuthLDAPGroupAttribute member\nAuthLDAPGroupAttributeIsDN On\nAuthLDAPURL ldaps://<dc1>:636/<fulldn>?sAMAccountName?sub?(objectClass=*)\nAuthLDAPURL ldaps://<dc2>:636/<fulldn>?sAMAccountName?sub?(objectClass=*)\nAuthLDAPBindDN "<user><fulldn>"\nAuthLDAPBindPassword <password>\nrequire ldap-group "<groupfulldn>"\n</Location>\n|' /etc/httpd/conf.d/ssl.conf
 
 #replace placeholders with variables
-##to-do need to check for variable population before executing sed
 sed -i "s|<dc1>|${dc1}|" /etc/httpd/conf.d/ssl.conf
 sed -i "s|<dc2>|${dc2}|" /etc/httpd/conf.d/ssl.conf
 sed -i "s|<fulldn>|${fulldn}|g" /etc/httpd/conf.d/ssl.conf
 sed -i "s|<user>|${user}|" /etc/httpd/conf.d/ssl.conf
 sed -i "s|<password>|${clearpass}|" /etc/httpd/conf.d/ssl.conf
 sed -i "s|<groupfulldn>|${LDAP_GROUP_DN}|" /etc/httpd/conf.d/ssl.conf
-####
 
-## syntax must be correct, cert file has to exist, module has to be installed for successfull restart
+## conf file syntax must be correct, cert file has to exist, module has to be installed for successfull restart
 #restart httpd
 service httpd restart
 
