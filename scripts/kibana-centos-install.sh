@@ -48,7 +48,6 @@ install_java() {
     RETRY=0
     while [ $RETRY -lt $MAX_RETRY ]; do
         #echo "Retry $RETRY: downloading jdk-8u121-linux-x64.rpm..."
-        #wget https://s3.amazonaws.com/app-chemistry/files/jdk-8u121-linux-x64.rpm
         echo "Retry $RETRY: installing epel-release..."
         yum -y install epel-release
         if [ $? -ne 0 ]; then
@@ -185,6 +184,18 @@ enabled=1" | tee /etc/yum.repos.d/kibana.repo
     yum -y install at
     yum -y install epel-release && yum -y --enablerepo=epel install python-pip wget && pip install --upgrade pip setuptools watchmaker && watchmaker -n --log-level debug --log-dir=/var/log/watchmaker --config=/usr/lib/python2.7/site-packages/watchmaker/static/config.yaml
     salt-call --local ash.fips_disable
+    #configure self signed ssl cert on httpd for proxy to client node
+    if [ ${CONF_APACHE_HTTPD} -ne 0 ]; then
+        log "Configure client node for httpd self signed ssl reverse proxy"
+        wget https://raw.githubusercontent.com/ewierschke/armtemplates/runwincustdata/scripts/httpdrevproxyselfsigned.sh -O /root/httpdrevproxyselfsigned.sh
+        chmod 755 /root/httpdrevproxyselfsigned.sh
+        /root/httpdrevproxyselfsigned.sh -P 5601
+        log "Configure client node httpd for ldaps authentication"
+        wget https://raw.githubusercontent.com/ewierschke/armtemplates/runwincustdata/scripts/kibananodeldapsauth.sh -O /root/kibananodeldapsauth.sh
+        chmod 755 /root/kibananodeldapsauth.sh
+        /root/kibananodeldapsauth.sh -C ${APACHE_LDAPS_CERT} -E ${APACHE_ENV_CONTENT_URL} -G ${APACHE_LDAP_GROUP_DN}
+        systemctl enable httpd
+    fi
     at now + 2 minutes -f /root/update.sh
 
     exit 0
@@ -200,19 +211,42 @@ fi
 ES_VERSION="2.3.1"
 INSTALL_MARVEL=0
 INSTALL_SENSE=0
+CONF_APACHE_HTTPD=0
 ELASTICSEARCH_URL="http://10.0.1.4:9200"
+APACHE_LDAPS_CERT=
+APACHE_ENV_CONTENT_URL=
+APACHE_LDAP_GROUP_DN=
 
-while getopts :v:t:msh optname; do
+while getopts :v:t:c:e:g:msha optname; do
   case ${optname} in
     v) ES_VERSION=${OPTARG};;
     m) INSTALL_MARVEL=1;;
     s) INSTALL_SENSE=1;;
-    t) ELASTICSEARCH_URL=${OPTARG};; 
+    t) ELASTICSEARCH_URL=${OPTARG};;
+    a) CONF_APACHE_HTTPD=1;;
+    c) APACHE_LDAPS_CERT=${OPTARG};;
+    e) APACHE_ENV_CONTENT_URL=${OPTARG};;
+    g) APACHE_LDAP_GROUP_DN=${OPTARG};;
     h) help; exit 1;;
    \?) help; error "Option -${OPTARG} not supported.";;
     :) help; error "Option -${OPTARG} requires an argument.";;
   esac
 done
+
+if [[ "${CONF_APACHE_HTTPD}" == 1 ]]; then
+    if [ -z "${APACHE_LDAPS_CERT}" ]; then
+        echo "ERROR-Attempting to configure apache http but did not provide ldaps public cert"
+        exit 1
+    fi
+    if [ -z "${APACHE_ENV_CONTENT_URL}" ]; then
+        echo "ERROR-Attempting to configure apache http but did not provide url to env content"
+        exit 1
+    fi
+    if [ -z "${APACHE_LDAP_GROUP_DN}" ]; then
+        echo "ERROR-Attempting to configure apache http but did not provide dn to ldap group"
+        exit 1
+    fi
+fi 
 
 install_java
 install_kibana
