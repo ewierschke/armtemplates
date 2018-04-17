@@ -121,17 +121,17 @@ shift $((OPTIND-1))
 # Validate parameters
 if [ -z "${LDAPS_CERT}" ]
 then
-    echo "No LDAPS_CERT (-C) was provided, can't configure HTTPD for LDAPS auth"
+    log "No LDAPS_CERT (-C) was provided, can't configure HTTPD for LDAPS auth"
     exit 1
 fi
 if [ -z "${ENV_CONTENT_URL}" ]
 then
-    echo "No ENV_CONTENT_URL (-E) was provided, can't configure HTTPD for LDAPS auth"
+    log "No ENV_CONTENT_URL (-E) was provided, can't configure HTTPD for LDAPS auth"
     exit 1
 fi
 if [ -z "${LDAP_GROUP_DN}" ]
 then
-    echo "No LDAP_GROUP_DN (-G) was provided, can't configure HTTPD for LDAPS auth"
+    log "No LDAP_GROUP_DN (-G) was provided, can't configure HTTPD for LDAPS auth"
     exit 1
 fi
 
@@ -157,6 +157,7 @@ retry 5 wget --timeout=10 \
 unzip -o /root/content.zip -d /root
 
 #get content into variables
+log "Getting creds from env file..."
 yum -y install epel-release
 yum -y install python-pip jq
 pip install pyyaml
@@ -168,44 +169,52 @@ pass1=$(sed -e 's/^"//' -e 's/"$//' <<<"$pass1")
 clearpass=$(/root/join-trim.sh "${pass1}" "${key1}")
 user=$(jq '.username' /root/env.json)
 user=$(sed -e 's/^"//' -e 's/"$//' <<<"$user")
+log "Populated cred variables..."
 
 #get current suffix from network
 ## need to validate against system handed multiple IP4.DOMAIN entries
+log "Populating domain based variables..."
 yum -y install bind-utils
-domain=$(nmcli dev show | grep DOMAIN | awk '{print $2}')
+#dnsservers=($(tail -n 2 /etc/resolv.conf | awk '{print $2}'))
+#dns1=$(nslookup ${dnsservers[0]} | awk '{print $4}')
+#dns1=${dns1::-1}
+domain=$(dnsdomainname)
+#nmcli doesn't work b/c azure nic not controlled by nm
+#domain=$(nmcli dev show | grep DOMAIN | awk '{print $2}')
 dcarray=($(host -t srv _ldap._tcp."${domain}" | awk '{print $8}'))
 dc1=${dcarray[0]::-1}
 dc2=${dcarray[1]::-1}
 #convert to dn format
 dn=$(sed -e 's/\./,dc=/' <<<"$domain")
 fulldn=dc=${dn}
+log "Populated domain based variables..."
 
 #to-do add check to validate LDAP_GROUP_DN against dn of domain
 
 #validate variables populated from env and content.zip
 if [ -z "${dc1}" ]
 then
-    echo "dc1 var didn't populate check for dns suffix in nmcli output and ad zones"
+    log "dc1 var didn't populate check for dns suffix in nmcli output and ad zones"
     exit 1
 fi
 if [ -z "${dc2}" ]
 then
-    echo "dc2 var didn't populate check for dns suffix in nmcli output and ad zones"
+    log "dc2 var didn't populate check for dns suffix in nmcli output and ad zones"
     exit 1
 fi
 if [ -z "${fulldn}" ]
 then
-    echo "fulldn var didn't populate check for dns suffix in nmcli output and appropriate conversion to dn"
+    log "fulldn var didn't populate check for dns suffix in nmcli output and appropriate conversion to dn"
     exit 1
 fi
 if [ -z "${user}" ]
 then
-    echo "user var didn't populate check content.zip contents"
+    log "user var didn't populate check content.zip contents"
     exit 1
 fi
 if [ -z "${clearpass}" ]
 then
-    echo "clearpass var didn't populate check content.zip contents and proper execution of join-trim"
+    log "clearpass var didn't populate check content.zip contents and proper execution of join-trim"
     exit 1
 fi
 
@@ -231,5 +240,6 @@ sed -i "s|<groupfulldn>|${LDAP_GROUP_DN}|" /etc/httpd/conf.d/ssl.conf
 
 ## conf file syntax must be correct, cert file has to exist, module has to be installed for successful restart
 #restart httpd
+log "Restarting Apache HTTP"
 service httpd restart
 
