@@ -1,3 +1,8 @@
+#!/bin/bash
+# Description:
+# Configure HTTPD on CentOS 7 for certificate based authentication
+# Creates cert to be trusted by HTTPD for later pickup/xfer
+#################################################################
 
 #create 3yr cert
 echo "Creating self-signed app cert"
@@ -12,8 +17,7 @@ cp /etc/httpd/conf.d/ssl.conf /etc/httpd/conf.d/ssl.conf.authbak
 cd /etc/httpd/conf.d/
 
 #add app1.pem as httpd trusted ca
-sed -i '/SSLCertificateKeyFile*/a \
-SSLCACertificateFile \/etc\/pki\/tls\/certs\/app1.pem' /etc/httpd/conf.d/ssl.conf
+sed -i '/SSLCertificateKeyFile*/a SSLCACertificateFile \/etc\/pki\/tls\/certs\/app1.pem' /etc/httpd/conf.d/ssl.conf
 
 #add virtualhost settings and auth requiring app1 cn
 sed -i 's|</VirtualHost>|SSLVerifyClient require\nSSLVerifyDepth 1\n</VirtualHost>\n\n<Location "/">\nSSLOptions +FakeBasicAuth\nSSLRequireSSL\nSSLRequire %{SSL_CLIENT_S_DN_CN}  eq "app1"\n</Location>\n|' /etc/httpd/conf.d/ssl.conf

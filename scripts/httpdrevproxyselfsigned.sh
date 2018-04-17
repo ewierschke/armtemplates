@@ -1,3 +1,9 @@
+#!/bin/bash
+# Description:
+# Configure HTTPD on CentOS 7 as reverse proxy to parameter defined port 
+# serving on 443 with self signed cert
+#################################################################
+
 usage()
 {
     cat << EOT
@@ -45,7 +51,8 @@ then
 fi
 
 revproxport=${REV_PROXY_TOPORT}
-myip=$(hostname -I)
+myipwspace=$(hostname -I)
+myip=$(echo "${myipwspace}" | awk '{gsub(/^ +| +$/,"")} {print $0}')
 shortname=$(hostname -s)
 
 # Build self signed cert for use on apache httpd as proxy
@@ -73,7 +80,7 @@ fi
 #create 3yr cert
 echo "Creating self-signed cert"
 cd /root/
-openssl req -nodes -sha256 -newkey rsa:2048 -keyout selfsigned.key -out selfsigned.csr -subj "/C=US/ST=ST/L=Loc/O=Org/OU=OU/CN="${shortname}""
+openssl req -nodes -sha256 -newkey rsa:2048 -keyout selfsigned.key -out selfsigned.csr -subj "/C=US/ST=ST/L=Loc/O=Org/OU=OU/CN=${shortname}"
 openssl x509 -req -sha256 -days 1095 -in selfsigned.csr -signkey selfsigned.key -out selfsigned.crt
 cp selfsigned.crt /etc/pki/tls/certs/
 cp selfsigned.key /etc/pki/tls/private/
@@ -87,7 +94,7 @@ echo "Writing new /etc/httpd/conf.d/ssl.conf"
 (
     printf "LoadModule ssl_module modules/mod_ssl.so\n"
     printf "\n"
-    printf "Listen "${myip}
+    printf "Listen %s" "${myip}"
     printf ":443\n"
     printf "\n"
     printf "SSLPassPhraseDialog  builtin\n"
@@ -110,15 +117,15 @@ echo "Writing new /etc/httpd/conf.d/ssl.conf"
     printf "\n"
     printf "BrowserMatch \".*MSIE.*\" nokeepalive ssl-unclean-shutdown downgrade-1.0 force-response-1.0\n"
     printf "\n"
-    printf "ServerName "${shortname}"\n"
-    printf "ServerAlias "${shortname}"\n"
+    printf "ServerName %s\n" "${shortname}"
+    printf "ServerAlias %s\n" "${shortname}"
     printf "\n"
     printf "ProxyRequests Off\n"
     printf "ProxyPreserveHost On\n"
-    printf "ProxyPass / http://"${myip}
-    printf ":"${revproxport}"/\n"
-    printf "ProxyPassReverse / http://"${myip}
-    printf ":"${revproxport}"/\n"
+    printf "ProxyPass / http://%s" "${myip}"
+    printf ":%s/\n" "${revproxport}"
+    printf "ProxyPassReverse / http://%s" "${myip}"
+    printf ":%s/\n" "${revproxport}"
     printf "\n"
     printf "</VirtualHost>\n"
     printf "\n"
