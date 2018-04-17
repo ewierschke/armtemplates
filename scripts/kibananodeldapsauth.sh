@@ -26,21 +26,45 @@ die()
 
 retry()
 {
+    # Make an arbitrary number of attempts to execute an arbitrary command,
+    # passing it arbitrary parameters. Convenient for working around
+    # intermittent errors (which occur often with poor repo mirrors).
+    #
+    # Returns the exit code of the command.
     local n=0
     local try=$1
-    local cmd="${@: 2}"
+    local cmd="${*: 2}"
+    local result=1
     [[ $# -le 1 ]] && {
-    echo "Usage $0 <number_of_retry_attempts> <Command>"; }
+        echo "Usage $0 <number_of_retry_attempts> <Command>"
+        exit $result
+    }
+
+    echo "Will try $try time(s) :: $cmd"
+
+    if [[ "${SHELLOPTS}" == *":errexit:"* ]]
+    then
+        set +e
+        local ERREXIT=1
+    fi
 
     until [[ $n -ge $try ]]
     do
-        $cmd && break || {
-            echo "Command Fail.."
+        sleep $n
+        $cmd
+        result=$?
+        test $result -eq 0 && break || {
             ((n++))
-            echo "retry $n ::"
-            sleep $n;
-            }
+            echo "Attempt $n, command failed :: $cmd"
+        }
     done
+
+    if [[ "${ERREXIT}" == "1" ]]
+    then
+        set -e
+    fi
+
+    return $result
 }  # ----------  end of function retry  ----------
 
 usage()
@@ -141,7 +165,7 @@ key1=$(jq '.key' /root/env.json)
 pass1=$(jq '.encrypted_password' /root/env.json)
 key1=$(sed -e 's/^"//' -e 's/"$//' <<<"$key1")
 pass1=$(sed -e 's/^"//' -e 's/"$//' <<<"$pass1")
-clearpass=$(/root/join-trim.sh ${pass1} ${key1})
+clearpass=$(/root/join-trim.sh "${pass1}" "${key1}")
 user=$(jq '.username' /root/env.json)
 user=$(sed -e 's/^"//' -e 's/"$//' <<<"$user")
 
@@ -149,7 +173,7 @@ user=$(sed -e 's/^"//' -e 's/"$//' <<<"$user")
 ## need to validate against system handed multiple IP4.DOMAIN entries
 yum -y install bind-utils
 domain=$(nmcli dev show | grep DOMAIN | awk '{print $2}')
-dcarray=($(host -t srv _ldap._tcp.${domain} | awk '{print $8}'))
+dcarray=($(host -t srv _ldap._tcp."${domain}" | awk '{print $8}'))
 dc1=${dcarray[0]::-1}
 dc2=${dcarray[1]::-1}
 #convert to dn format
