@@ -120,7 +120,7 @@ enabled=1" | tee /etc/yum.repos.d/kibana.repo
     # install the marvel plugin for 2.x
     if [ "${INSTALL_MARVEL}" -ne 0 ];
     then
-		if [[ "${ES_VERSION}" == \2* ]];
+        if [[ "${ES_VERSION}" == \2* ]];
         then 
             RETRY=0
             while [ $RETRY -lt $MAX_RETRY ]; do
