@@ -238,6 +238,9 @@ sed -i "s|<user>|${user}|" /etc/httpd/conf.d/ssl.conf
 sed -i "s|<password>|${clearpass}|" /etc/httpd/conf.d/ssl.conf
 sed -i "s|<groupfulldn>|${LDAP_GROUP_DN}|" /etc/httpd/conf.d/ssl.conf
 
+#increase logging
+sed -i "s|LogLevel warn|LogLevel debug|" /etc/httpd/conf.d/ssl.conf
+
 ## conf file syntax must be correct, cert file has to exist, module has to be installed for successful restart
 #restart httpd
 log "Restarting Apache HTTP"
