@@ -228,7 +228,7 @@ cd /etc/httpd/conf.d/
 sed -i 's|LoadModule ssl_module modules/mod_ssl.so|LoadModule ssl_module modules/mod_ssl.so\n\nLDAPVerifyServerCert off\nLDAPTrustedMode SSL\nLDAPTrustedGlobalCert CA_BASE64 /etc/pki/tls/certs/envCA.cer\n|' /etc/httpd/conf.d/ssl.conf
 
 #add location section requiring membership in ldap group to auth
-sed -i 's|</VirtualHost>|</VirtualHost>\n\n<Location "/">\nAuthName "AD authentication"\nAuthBasicProvider ldap\nAuthType Basic\nAuthLDAPGroupAttribute member\nAuthLDAPGroupAttributeIsDN On\nAuthLDAPURL ldaps://<dc1>:636/<fulldn>?sAMAccountName?sub?(objectClass=*)\nAuthLDAPURL ldaps://<dc2>:636/<fulldn>?sAMAccountName?sub?(objectClass=*)\nAuthLDAPBindDN "<user><fulldn>"\nAuthLDAPBindPassword <password>\nrequire ldap-group "<groupfulldn>"\n</Location>\n|' /etc/httpd/conf.d/ssl.conf
+sed -i 's|</VirtualHost>|</VirtualHost>\n\n<Location "/">\nAuthName "AD authentication"\nAuthBasicProvider ldap\nAuthType Basic\nAuthLDAPGroupAttribute member\nAuthLDAPGroupAttributeIsDN On\nAuthLDAPURL ldaps://<dc1>:636/<fulldn>?sAMAccountName?sub?(objectClass=*)\nAuthLDAPURL ldaps://<dc2>:636/<fulldn>?sAMAccountName?sub?(objectClass=*)\nAuthLDAPBindDN "<user><fulldn>"\nAuthLDAPBindPassword <password>\nRequire ldap-group <groupfulldn>\n</Location>\n|' /etc/httpd/conf.d/ssl.conf
 
 #replace placeholders with variables
 sed -i "s|<dc1>|${dc1}|" /etc/httpd/conf.d/ssl.conf
