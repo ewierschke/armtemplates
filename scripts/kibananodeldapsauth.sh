@@ -185,7 +185,7 @@ dcarray=($(host -t srv _ldap._tcp."${domain}" | awk '{print $8}'))
 dc1=${dcarray[0]::-1}
 dc2=${dcarray[1]::-1}
 #convert to dn format
-dn=$(sed -e 's/\./,dc=/' <<<"$domain")
+dn=$(sed -e 's/\./,dc=/g' <<<"$domain")
 fulldn=dc=${dn}
 log "Populated domain based variables..."
 
