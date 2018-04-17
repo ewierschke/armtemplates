@@ -118,7 +118,7 @@ enabled=1" | tee /etc/yum.repos.d/kibana.repo
     echo "elasticsearch.ssl.verify: false" >> /opt/kibana/config/kibana.yml
 
     # install the marvel plugin for 2.x
-    if [ ${INSTALL_MARVEL} -ne 0 ];
+    if [ "${INSTALL_MARVEL}" -ne 0 ];
     then
 		if [[ "${ES_VERSION}" == \2* ]];
         then 
@@ -142,7 +142,7 @@ enabled=1" | tee /etc/yum.repos.d/kibana.repo
     fi
     
     # install the sense plugin for 2.x
-    if [ ${INSTALL_SENSE} -ne 0 ];
+    if [ "${INSTALL_SENSE}" -ne 0 ];
     then
         if [[ "${ES_VERSION}" == \2* ]];
         then
@@ -185,7 +185,7 @@ enabled=1" | tee /etc/yum.repos.d/kibana.repo
     yum -y install epel-release && yum -y --enablerepo=epel install python-pip wget && pip install --upgrade pip setuptools watchmaker && watchmaker -n --log-level debug --log-dir=/var/log/watchmaker --config=/usr/lib/python2.7/site-packages/watchmaker/static/config.yaml
     salt-call --local ash.fips_disable
     #configure self signed ssl cert on httpd for proxy to client node
-    if [ ${CONF_APACHE_HTTPD} -ne 0 ]; then
+    if [ "${CONF_APACHE_HTTPD}" -ne 0 ]; then
         log "Configure client node for httpd self signed ssl reverse proxy"
         wget https://raw.githubusercontent.com/ewierschke/armtemplates/runwincustdata/scripts/httpdrevproxyselfsigned.sh -O /root/httpdrevproxyselfsigned.sh
         chmod 755 /root/httpdrevproxyselfsigned.sh
@@ -193,7 +193,7 @@ enabled=1" | tee /etc/yum.repos.d/kibana.repo
         log "Configure client node httpd for ldaps authentication"
         wget https://raw.githubusercontent.com/ewierschke/armtemplates/runwincustdata/scripts/kibananodeldapsauth.sh -O /root/kibananodeldapsauth.sh
         chmod 755 /root/kibananodeldapsauth.sh
-        /root/kibananodeldapsauth.sh -C ${APACHE_LDAPS_CERT} -E ${APACHE_ENV_CONTENT_URL} -G ${APACHE_LDAP_GROUP_DN}
+        /root/kibananodeldapsauth.sh -C "${APACHE_LDAPS_CERT}" -E "${APACHE_ENV_CONTENT_URL}" -G "${APACHE_LDAP_GROUP_DN}"
         systemctl enable httpd
     fi
     at now + 2 minutes -f /root/update.sh
