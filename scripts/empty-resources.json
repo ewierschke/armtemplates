@@ -41,14 +41,6 @@
     "namespace": {
       "type": "string",
       "defaultValue": ""
-    },
-    "masterNodesIpPrefix": {
-      "type": "string",
-      "defaultValue": ""
-    },
-    "storageSettings": {
-      "type": "object",
-      "defaultValue": ""
     }
   },
   "variables": {},
