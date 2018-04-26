@@ -158,6 +158,16 @@
             "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
           ],
           "properties": "[parameters('osSettings').extensionSettings.jumpbox]"
+        },
+        {
+          "type": "extensions",
+          "name": "jumpboxoms",
+          "apiVersion": "2015-06-15",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+          ],
+          "properties": "[parameters('osSettings').extensionSettings.jumpboxoms]"
         }
       ]
     }

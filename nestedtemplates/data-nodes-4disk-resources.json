@@ -220,6 +220,16 @@
               "commandToExecute": "[concat(parameters('osSettings').extensionSettings.data.settings.commandToExecute, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameAFS')), '2016-01-01').keys[0].value)]"
             }
           }
+        },
+        {
+          "type": "extensions",
+          "name": "dataoms",
+          "apiVersion": "2015-06-15",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'), copyindex()))]"
+          ],
+          "properties": "[parameters('osSettings').extensionSettings.dataoms]"
         }
       ]
     }

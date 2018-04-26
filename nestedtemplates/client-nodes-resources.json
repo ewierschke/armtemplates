@@ -105,7 +105,7 @@
         "publicIPAllocationMethod": "Static"
       }
     },
-  {
+    {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "es-client-set",
@@ -209,6 +209,16 @@
               "commandToExecute": "[concat(parameters('osSettings').extensionSettings.client.settings.commandToExecute, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameAFS')), '2016-01-01').keys[0].value)]"
             }
           }
+        },
+        {
+          "type": "extensions",
+          "name": "clientoms",
+          "apiVersion": "2015-06-15",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'), copyindex()))]"
+          ],
+          "properties": "[parameters('osSettings').extensionSettings.clientoms]"
         }
       ]
     }
