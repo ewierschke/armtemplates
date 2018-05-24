@@ -196,6 +196,7 @@ enabled=1" | tee /etc/yum.repos.d/kibana.repo
         /root/kibananodeldapsauth.sh -C "${APACHE_LDAPS_CERT}" -E "${APACHE_ENV_CONTENT_URL}" -G "${APACHE_LDAP_GROUP_DN}"
         systemctl enable httpd
     fi
+    service atd start
     at now + 2 minutes -f /root/update.sh
 
     exit 0

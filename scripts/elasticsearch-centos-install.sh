@@ -588,6 +588,7 @@ if [ ${CLIENT_ONLY_NODE} -ne 0 ]; then
     systemctl enable httpd
 fi
 sed -i_bak -e '/tmp/d' /etc/fstab
+service atd start
 at now + 2 minutes -f /root/update.sh
 
 exit 0
