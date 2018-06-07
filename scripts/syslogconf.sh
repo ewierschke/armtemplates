@@ -19,7 +19,9 @@ chkconfig rsyslog on
 #open fireall port for udp 514
 #default syslog service definition in /usr/lib/firewalld/services/ only covers udp
 firewall-offline-cmd --zone=public --add-service=syslog
-#firewall-offline-cmd --zone=public --permanent --add-service=syslog
+#firewall-cmd --zone=public --permanent --add-service=syslog
+#firewall-offline-cmd --zone=public --add-port=514/tcp
+#firewall-cmd --zone=public --permanent --add-port=514/tcp
 
 #ensure varVol is large enough for extensions
 varsize=$(lvdisplay | awk '/varVol/{found=1}; /LV Size/ && found{print $3; exit}')
