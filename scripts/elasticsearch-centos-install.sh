@@ -567,6 +567,7 @@ firewall-cmd --zone=public --add-port=9305/tcp
     printf "service elasticsearch stop\n"
     printf "/usr/share/elasticsearch/bin/plugin remove analysis-phonetic\n"
     printf "/usr/share/elasticsearch/bin/plugin install analysis-phonetic\n"
+    printf "chown -R elasticsearch:elasticsearch /usr/share/elasticsearch/plugins/*\n"
     printf "shutdown -r now\n"
 ) > /root/update.sh
 chmod 755 /root/update.sh
