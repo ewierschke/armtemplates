@@ -84,11 +84,11 @@ install_kibana() {
     fi 
     
     echo "[kibana-${KIBANA_VERSION}]
-name=Kibana repository for ${KIBANA_VERSION}.x packages
-baseurl=http://packages.elastic.co/kibana/${KIBANA_VERSION}/centos
-gpgcheck=1
-gpgkey=http://packages.elastic.co/GPG-KEY-elasticsearch
-enabled=1" | tee /etc/yum.repos.d/kibana.repo
+    name=Kibana repository for ${KIBANA_VERSION}.x packages
+    baseurl=http://packages.elastic.co/kibana/${KIBANA_VERSION}/centos
+    gpgcheck=1
+    gpgkey=http://packages.elastic.co/GPG-KEY-elasticsearch
+    enabled=1" | tee /etc/yum.repos.d/kibana.repo
     
     RETRY=0
     while [ $RETRY -lt $MAX_RETRY ]; do
@@ -208,6 +208,10 @@ if [ "${UID}" -ne 0 ];
 then
     error "You must be root to run this script."
 fi
+
+#testing excluding waagentlinux from yum update b/c of breaking at watchmaker 
+echo "exclude=WALinuxAgent" >> /etc/yum.conf
+#yum -y upgrade --exclude=WALinuxAgent
 
 ES_VERSION="2.3.1"
 INSTALL_MARVEL=0
