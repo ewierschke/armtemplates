@@ -65,6 +65,8 @@ then
     exit 3
 fi
 
+yum -y upgrade
+
 # TEMP FIX - Re-evaluate and remove when possible
 # This is an interim fix for hostname resolution in current VM
 #grep -q "${HOSTNAME}" /etc/hosts
