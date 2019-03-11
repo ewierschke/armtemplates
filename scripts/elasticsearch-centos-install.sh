@@ -65,7 +65,9 @@ then
     exit 3
 fi
 
-yum -y upgrade --exclude=WALinuxAgent
+#testing excluding waagentlinux from yum update b/c of breaking at watchmaker 
+echo "exclude=WALinuxAgent" >> /etc/yum.conf
+#yum -y upgrade --exclude=WALinuxAgent
 
 # TEMP FIX - Re-evaluate and remove when possible
 # This is an interim fix for hostname resolution in current VM
