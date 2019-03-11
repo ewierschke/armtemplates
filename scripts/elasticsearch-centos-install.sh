@@ -65,7 +65,7 @@ then
     exit 3
 fi
 
-yum -y upgrade
+yum -y upgrade --exclude=WALinuxAgent
 
 # TEMP FIX - Re-evaluate and remove when possible
 # This is an interim fix for hostname resolution in current VM
