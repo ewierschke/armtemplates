@@ -83,12 +83,23 @@ install_kibana() {
         KIBANA_VERSION='4.1'    
     fi 
     
-    echo "[kibana-${KIBANA_VERSION}]
-    name=Kibana repository for ${KIBANA_VERSION}.x packages
-    baseurl=http://packages.elastic.co/kibana/${KIBANA_VERSION}/centos
-    gpgcheck=1
-    gpgkey=http://packages.elastic.co/GPG-KEY-elasticsearch
-    enabled=1" | tee /etc/yum.repos.d/kibana.repo
+    #replacing echo/tee approach to creating repo file
+    (
+        printf "[kibana-${KIBANA_VERSION}]\n"
+        printf "name=Kibana repository for ${KIBANA_VERSION}.x packages\n"
+        printf "baseurl=http://packages.elastic.co/kibana/${KIBANA_VERSION}/centos\n"
+        printf "gpgcheck=1\n"
+        printf "gpgkey=http://packages.elastic.co/GPG-KEY-elasticsearch\n"
+        printf "enabled=1\n"
+    ) > /etc/yum.repos.d/kibana.repo
+
+    #commented out b/c result doesn't have proper spacing
+    #echo "[kibana-${KIBANA_VERSION}]
+    #name=Kibana repository for ${KIBANA_VERSION}.x packages
+    #baseurl=http://packages.elastic.co/kibana/${KIBANA_VERSION}/centos
+    #gpgcheck=1
+    #gpgkey=http://packages.elastic.co/GPG-KEY-elasticsearch
+    #enabled=1" | tee /etc/yum.repos.d/kibana.repo
     
     RETRY=0
     while [ $RETRY -lt $MAX_RETRY ]; do
